@@ -84,18 +84,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 30),
 
                 // Date selector
-                SizedBox(
-                  height: 80,
-                  child: DateSelector(
-                    dates: weekDays,
-                    selectedDate: selectedDate,
-                    onDateSelected: (date) {
-                      setState(() {
-                        selectedDate = date;
-                      });
-                    },
-                    showOtherOption: false,
-                  ),
+                DateSelector(
+                  dates: weekDays,
+                  selectedDate: selectedDate,
+                  onDateSelected: (date) {
+                    setState(() {
+                      selectedDate = date;
+                    });
+                  },
+                  showOtherOption: false,
                 ),
                 const SizedBox(height: 30),
 
