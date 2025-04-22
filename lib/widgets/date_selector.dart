@@ -24,13 +24,14 @@ class DateSelector extends StatelessWidget {
         children: [
           ...dates.map((date) {
             final bool isSelected = DateTimeUtils.isSameDay(date, selectedDate);
-
+            
             return DateCard(
               date: date,
               isSelected: isSelected,
               onTap: () => onDateSelected(date),
             );
           }).toList(),
+          
           if (showOtherOption)
             OtherDateCard(
               onTap: () async {
@@ -40,7 +41,7 @@ class DateSelector extends StatelessWidget {
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2030),
                 );
-
+                
                 if (pickedDate != null) {
                   onDateSelected(pickedDate);
                 }
@@ -73,7 +74,9 @@ class DateCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.secondaryColor : AppTheme.surfaceColor,
+          color: isSelected
+              ? AppTheme.secondaryColor
+              : AppTheme.surfaceColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

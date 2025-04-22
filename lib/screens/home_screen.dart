@@ -19,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // Current date
   DateTime selectedDate = DateTime.now();
-
+  
   // Sample events
   final List<Event> events = [
     Event(
@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
       attendees: ['T\'Challa', 'You'],
     ),
   ];
-
+  
   // Sample reminders
   final List<Reminder> reminders = [
     Reminder(
@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Date selector
                 SizedBox(
-                  height: 120,
+                  height: 80,
                   child: DateSelector(
                     dates: weekDays,
                     selectedDate: selectedDate,
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Schedule section
                 const SectionHeader(title: "Schedule Today"),
                 const SizedBox(height: 16),
-
+                
                 // Schedule events
                 _buildEventsList(),
                 const SizedBox(height: 30),
@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   subtitle: "Don't forget schedule for tomorrow",
                 ),
                 const SizedBox(height: 16),
-
+                
                 // Reminder cards
                 _buildRemindersList(),
                 const SizedBox(height: 20),
@@ -174,10 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEventsList() {
     // Filter events for the selected date
-    final todayEvents = events
-        .where((event) => DateTimeUtils.isSameDay(event.date, selectedDate))
-        .toList();
-
+    final todayEvents = events.where(
+      (event) => DateTimeUtils.isSameDay(event.date, selectedDate)
+    ).toList();
+    
     if (todayEvents.isEmpty) {
       return const Center(
         child: Padding(
@@ -192,16 +192,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-
+    
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: todayEvents.length,
       itemBuilder: (context, index) {
         final event = todayEvents[index];
-        final categoryColor =
-            AppTheme.categoryColors[event.category] ?? AppTheme.primaryColor;
-
+        final categoryColor = AppTheme.categoryColors[event.category] ?? 
+            AppTheme.primaryColor;
+            
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: EventCard(

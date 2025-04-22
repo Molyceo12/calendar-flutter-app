@@ -15,11 +15,10 @@ class DecorativeBackground extends StatelessWidget {
           shape: BoxShape.circle,
           gradient: LinearGradient(
             colors: [
-              const Color(0xFFB2DFDB).withAlpha(178),
-              const Color(0xFFF48FB1).withAlpha(178),
-              const Color(0xFFB39DDB).withAlpha(178),
+              const Color(0xFFB2DFDB).withValues(alpha: 0.7),
+              const Color(0xFFF48FB1).withValues(alpha: 0.7),
+              const Color(0xFFB39DDB).withValues(alpha: 0.7),
             ],
-
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

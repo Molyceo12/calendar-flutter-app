@@ -42,7 +42,7 @@ class TimeRangeSelector extends StatelessWidget {
                     context: context,
                     initialTime: _parseTimeString(startTime),
                   );
-
+                  
                   if (pickedTime != null) {
                     onStartTimeChanged(_formatTimeOfDay(pickedTime));
                   }
@@ -75,7 +75,7 @@ class TimeRangeSelector extends StatelessWidget {
                     context: context,
                     initialTime: _parseTimeString(endTime),
                   );
-
+                  
                   if (pickedTime != null) {
                     onEndTimeChanged(_formatTimeOfDay(pickedTime));
                   }

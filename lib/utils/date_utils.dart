@@ -30,8 +30,7 @@ class DateTimeUtils {
     final minute = parts.length > 1 ? int.parse(parts[1]) : 0;
 
     final timeOfDay = TimeOfDay(hour: hour, minute: minute);
-    final hourOfPeriod =
-        timeOfDay.hourOfPeriod == 0 ? 12 : timeOfDay.hourOfPeriod;
+    final hourOfPeriod = timeOfDay.hourOfPeriod == 0 ? 12 : timeOfDay.hourOfPeriod;
     final period = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
 
     return '$hourOfPeriod:${minute.toString().padLeft(2, '0')} $period';

@@ -16,17 +16,17 @@ class CreateEventScreen extends StatefulWidget {
 class _CreateEventScreenState extends State<CreateEventScreen> {
   // Selected date (default to tomorrow)
   DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-
+  
   // Time range
   String startTime = "12.00";
   String endTime = "14.00";
-
+  
   // Selected category
   String selectedCategory = "Hangout";
-
+  
   // Note controller
   final TextEditingController noteController = TextEditingController();
-
+  
   // Category options
   final List<String> categories = [
     "Meeting",
@@ -51,7 +51,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         children: [
           // Decorative background shape
           const DecorativeBackground(),
-
+          
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -64,11 +64,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     style: AppTheme.headingLarge,
                   ),
                   const SizedBox(height: 32),
-
+                  
                   // Date selection
                   const SectionHeader(title: "Select the date"),
                   const SizedBox(height: 16),
-
+                  
                   // Date options
                   SizedBox(
                     height: 120,
@@ -83,11 +83,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
+                  
                   // Time selection
                   const SectionHeader(title: "Select time"),
                   const SizedBox(height: 16),
-
+                  
                   // Time range selector
                   TimeRangeSelector(
                     startTime: startTime,
@@ -104,11 +104,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
-
+                  
                   // Category selection
                   const SectionHeader(title: "Category"),
                   const SizedBox(height: 16),
-
+                  
                   // Category options
                   CategorySelector(
                     categories: categories,
@@ -124,11 +124,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
-
+                  
                   // Note section
                   const SectionHeader(title: "Note"),
                   const SizedBox(height: 16),
-
+                  
                   // Note text field
                   Container(
                     height: 150,
@@ -148,7 +148,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
+                  
                   // Save button
                   SizedBox(
                     width: double.infinity,
@@ -172,7 +172,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   void _showAddCategoryDialog() {
     final TextEditingController categoryController = TextEditingController();
-
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

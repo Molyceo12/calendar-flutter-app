@@ -23,9 +23,9 @@ class CategorySelector extends StatelessWidget {
       children: [
         ...categories.map((category) {
           final bool isSelected = category == selectedCategory;
-          final Color categoryColor = AppTheme.categoryColors[category] ??
+          final Color categoryColor = AppTheme.categoryColors[category] ?? 
               AppTheme.categoryColors["Other"]!;
-
+          
           return CategoryChip(
             label: category,
             color: categoryColor,
@@ -33,7 +33,9 @@ class CategorySelector extends StatelessWidget {
             onTap: () => onCategorySelected(category),
           );
         }).toList(),
-        if (onAddCategory != null) AddCategoryChip(onTap: onAddCategory!),
+        
+        if (onAddCategory != null)
+          AddCategoryChip(onTap: onAddCategory!),
       ],
     );
   }
@@ -60,7 +62,7 @@ class CategoryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(229),
+          color: Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
