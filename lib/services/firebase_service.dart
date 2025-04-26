@@ -51,7 +51,7 @@ class FirebaseService {
       print('Error during sign up: $e');
       rethrow;
     }
-  }
+  } 
 
   Future<User?> signIn(String email, String password) async {
     try {
