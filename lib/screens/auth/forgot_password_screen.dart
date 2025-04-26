@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:calendar_app/theme/app_theme.dart';
+import 'package:calendar_app/providers/auth_provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -24,30 +26,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _isSubmitting = true;
       });
-      
-      
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      
+
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final success =
+          await authProvider.resetPassword(_emailController.text.trim());
+
       setState(() {
         _isSubmitting = false;
       });
-      
-      // Show success message
-      if (mounted) {
+
+      if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Password reset link sent to your email'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate back after a delay
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.pop(context);
           }
         });
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.error ?? 'Failed to send reset link'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -84,7 +92,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              
+
               // Form
               Form(
                 key: _formKey,
@@ -102,14 +110,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
                           return 'Please enter a valid email';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 30),
-                    
+
                     // Reset Button
                     SizedBox(
                       width: double.infinity,
@@ -117,16 +126,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       child: ElevatedButton(
                         onPressed: _isSubmitting ? null : _resetPassword,
                         child: _isSubmitting
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
                             : const Text("Reset Password"),
                       ),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Instructions
               Container(
                 padding: const EdgeInsets.all(16),

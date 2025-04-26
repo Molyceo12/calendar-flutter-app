@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/widgets/category_selector.dart';
 import 'package:calendar_app/widgets/date_selector.dart';
 import 'package:calendar_app/widgets/decorative_background.dart';
 import 'package:calendar_app/widgets/section_header.dart';
 import 'package:calendar_app/widgets/time_range_selector.dart';
+import 'package:calendar_app/providers/event_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateEventScreen extends StatefulWidget {
-  const CreateEventScreen({Key? key}) : super(key: key);
+  final Event? eventToEdit;
+
+  const CreateEventScreen({Key? key, this.eventToEdit}) : super(key: key);
 
   @override
   State<CreateEventScreen> createState() => _CreateEventScreenState();
 }
 
 class _CreateEventScreenState extends State<CreateEventScreen> {
-  // Selected date (default to tomorrow)
-  DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
-  
-  // Time range
-  String startTime = "12.00";
-  String endTime = "14.00";
-  
-  // Selected category
-  String selectedCategory = "Hangout";
-  
-  // Note controller
-  final TextEditingController noteController = TextEditingController();
-  
+  late DateTime selectedDate;
+  late String startTime;
+  late String endTime;
+  late String selectedCategory;
+  late TextEditingController titleController;
+  late TextEditingController noteController;
+  bool isEditing = false;
+  bool isSaving = false;
+
   // Category options
   final List<String> categories = [
     "Meeting",
@@ -35,6 +37,104 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     "Other",
     "Weekend",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Check if we're editing an existing event
+    if (widget.eventToEdit != null) {
+      isEditing = true;
+      selectedDate = widget.eventToEdit!.date;
+      startTime = widget.eventToEdit!.startTime;
+      endTime = widget.eventToEdit!.endTime;
+      selectedCategory = widget.eventToEdit!.category;
+      titleController = TextEditingController(text: widget.eventToEdit!.title);
+      noteController = TextEditingController(text: widget.eventToEdit!.note);
+    } else {
+      // Default values for new event
+      selectedDate = DateTime.now().add(const Duration(days: 1));
+      startTime = "12.00";
+      endTime = "14.00";
+      selectedCategory = "Hangout";
+      titleController = TextEditingController();
+      noteController = TextEditingController();
+    }
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveEvent() async {
+    if (titleController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a title for the event'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+
+      if (isEditing) {
+        // Update existing event
+        final updatedEvent = widget.eventToEdit!.copyWith(
+          title: titleController.text,
+          date: selectedDate,
+          startTime: startTime,
+          endTime: endTime,
+          category: selectedCategory,
+          note: noteController.text,
+        );
+
+        await eventProvider.updateEvent(updatedEvent);
+      } else {
+        // Create new event
+        final newEvent = Event(
+          id: const Uuid().v4(),
+          title: titleController.text,
+          date: selectedDate,
+          startTime: startTime,
+          endTime: endTime,
+          category: selectedCategory,
+          note: noteController.text,
+          attendees: [],
+        );
+
+        await eventProvider.addEvent(newEvent);
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving event: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +147,23 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          isEditing ? "Edit Event" : "Create Event",
+          style: const TextStyle(color: AppTheme.textPrimaryColor),
+        ),
+      ),
       body: Stack(
         children: [
           // Decorative background shape
           const DecorativeBackground(),
-          
+
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -59,16 +171,38 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
-                  const Text(
-                    "Let's set the\nschedule easily",
+                  Text(
+                    isEditing
+                        ? "Update your\nschedule"
+                        : "Let's set the\nschedule easily",
                     style: AppTheme.headingLarge,
                   ),
                   const SizedBox(height: 32),
-                  
+
+                  // Title input
+                  const SectionHeader(title: "Event Title"),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Enter event title...",
+                        hintStyle: TextStyle(color: AppTheme.textTertiaryColor),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
                   // Date selection
                   const SectionHeader(title: "Select the date"),
                   const SizedBox(height: 16),
-                  
+
                   // Date options
                   SizedBox(
                     height: 120,
@@ -83,11 +217,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Time selection
                   const SectionHeader(title: "Select time"),
                   const SizedBox(height: 16),
-                  
+
                   // Time range selector
                   TimeRangeSelector(
                     startTime: startTime,
@@ -104,11 +238,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Category selection
                   const SectionHeader(title: "Category"),
                   const SizedBox(height: 16),
-                  
+
                   // Category options
                   CategorySelector(
                     categories: categories,
@@ -124,11 +258,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Note section
                   const SectionHeader(title: "Note"),
                   const SizedBox(height: 16),
-                  
+
                   // Note text field
                   Container(
                     height: 150,
@@ -148,17 +282,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Save button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Save the event and navigate back
-                        Navigator.pop(context);
-                      },
-                      child: const Text("Save"),
+                      onPressed: isSaving ? null : _saveEvent,
+                      child: isSaving
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(isEditing ? "Update" : "Save"),
                     ),
                   ),
                 ],
@@ -172,7 +305,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   void _showAddCategoryDialog() {
     final TextEditingController categoryController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

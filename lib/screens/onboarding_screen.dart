@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/screens/auth/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -16,7 +17,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       title: "Plan Your Day",
-      description: "Organize your schedule with our intuitive calendar interface",
+      description:
+          "Organize your schedule with our intuitive calendar interface",
       image: "assets/images/onboarding1.png",
       color: AppTheme.primaryColor,
     ),
@@ -46,10 +48,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  void _navigateToLogin() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+  void _navigateToLogin() async {
+    // Save that onboarding is completed
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('showOnboarding', false);
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -66,7 +74,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               return _buildPage(_pages[index]);
             },
           ),
-          
+
           // Skip button
           Positioned(
             top: 50,
@@ -83,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ),
-          
+
           // Bottom navigation
           Positioned(
             bottom: 50,
@@ -100,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                
+
                 // Next or Get Started button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -126,7 +134,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == _pages.length - 1 ? "Get Started" : "Next",
+                        _currentPage == _pages.length - 1
+                            ? "Get Started"
+                            : "Next",
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -195,7 +205,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       width: _currentPage == index ? 20 : 10,
       height: 10,
       decoration: BoxDecoration(
-        color: _currentPage == index ? Colors.white : Colors.white.withValues(alpha: 0.4),
+        color: _currentPage == index
+            ? Colors.white
+            : Colors.white.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(5),
       ),
     );
