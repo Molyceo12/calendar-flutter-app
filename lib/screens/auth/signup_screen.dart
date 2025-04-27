@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/widgets/social_login_button.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
+import 'dart:io' show Platform;
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -21,6 +22,11 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
   bool _isLoading = false;
+  final Map<SocialAuthProvider, bool> _socialLoading = {
+    SocialAuthProvider.google: false,
+    SocialAuthProvider.apple: false,
+    SocialAuthProvider.facebook: false,
+  };
 
   @override
   void dispose() {
@@ -66,6 +72,28 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  Future<void> _socialLogin(SocialAuthProvider provider) async {
+    setState(() {
+      _socialLoading[provider] = true;
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.signInWithSocial(provider);
+
+    setState(() {
+      _socialLoading[provider] = false;
+    });
+
+    if (!success && mounted && authProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error!),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +126,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-
+              
               // Signup Form
               Form(
                 key: _formKey,
@@ -119,7 +147,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-
+                    
                     // Email Field
                     TextFormField(
                       controller: _emailController,
@@ -132,15 +160,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                           return 'Please enter a valid email';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
-
+                    
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
@@ -150,9 +177,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
                           ),
                           onPressed: () {
                             setState(() {
@@ -172,7 +197,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-
+                    
                     // Confirm Password Field
                     TextFormField(
                       controller: _confirmPasswordController,
@@ -182,14 +207,11 @@ class _SignupScreenState extends State<SignupScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
                             });
                           },
                         ),
@@ -205,7 +227,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-
+                    
                     // Terms and Conditions Checkbox
                     Row(
                       children: [
@@ -222,8 +244,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           child: RichText(
                             text: const TextSpan(
                               text: 'I agree to the ',
-                              style: TextStyle(
-                                  color: AppTheme.textSecondaryColor),
+                              style: TextStyle(color: AppTheme.textSecondaryColor),
                               children: [
                                 TextSpan(
                                   text: 'Terms and Conditions',
@@ -240,7 +261,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ],
                     ),
                     const SizedBox(height: 30),
-
+                    
                     // Signup Button
                     SizedBox(
                       width: double.infinity,
@@ -248,17 +269,16 @@ class _SignupScreenState extends State<SignupScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _signup,
                         child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
+                            ? const CircularProgressIndicator(color: Colors.white)
                             : const Text("Sign Up"),
                       ),
                     ),
                   ],
                 ),
               ),
-
+              
               const SizedBox(height: 30),
-
+              
               // OR Divider
               const Row(
                 children: [
@@ -275,9 +295,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   Expanded(child: Divider()),
                 ],
               ),
-
+              
               const SizedBox(height: 30),
-
+              
               // Social Signup Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -286,26 +306,24 @@ class _SignupScreenState extends State<SignupScreen> {
                     icon: Icons.g_mobiledata,
                     label: "Google",
                     color: Colors.red,
-                    onPressed: () {
-                      // TODO: Implement Google signup
-                    },
+                    isLoading: _socialLoading[SocialAuthProvider.google]!,
+                    onPressed: () => _socialLogin(SocialAuthProvider.google),
                   ),
                   SocialLoginButton(
                     icon: Icons.facebook,
                     label: "Facebook",
                     color: Colors.blue,
-                    onPressed: () {
-                      // TODO: Implement Facebook signup
-                    },
+                    isLoading: _socialLoading[SocialAuthProvider.facebook]!,
+                    onPressed: () => _socialLogin(SocialAuthProvider.facebook),
                   ),
-                  SocialLoginButton(
-                    icon: Icons.apple,
-                    label: "Apple",
-                    color: Colors.black,
-                    onPressed: () {
-                      // TODO: Implement Apple signup
-                    },
-                  ),
+                  if (Platform.isIOS || Platform.isMacOS)
+                    SocialLoginButton(
+                      icon: Icons.apple,
+                      label: "Apple",
+                      color: Colors.black,
+                      isLoading: _socialLoading[SocialAuthProvider.apple]!,
+                      onPressed: () => _socialLogin(SocialAuthProvider.apple),
+                    ),
                 ],
               ),
             ],

@@ -11,7 +11,7 @@ class SocialLoginButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
-    required this.onPressed,
+    required this.onPressed, required bool isLoading,
   }) : super(key: key);
 
   @override

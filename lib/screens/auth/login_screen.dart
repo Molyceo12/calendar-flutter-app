@@ -5,6 +5,7 @@ import 'package:calendar_app/screens/auth/signup_screen.dart';
 import 'package:calendar_app/screens/auth/forgot_password_screen.dart';
 import 'package:calendar_app/widgets/social_login_button.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
+import 'dart:io' show Platform;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -19,6 +20,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  final Map<SocialAuthProvider, bool> _socialLoading = {
+    SocialAuthProvider.google: false,
+    SocialAuthProvider.apple: false,
+    SocialAuthProvider.facebook: false,
+  };
 
   @override
   void dispose() {
@@ -54,6 +60,28 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _socialLogin(SocialAuthProvider provider) async {
+    setState(() {
+      _socialLoading[provider] = true;
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.signInWithSocial(provider);
+
+    setState(() {
+      _socialLoading[provider] = false;
+    });
+
+    if (!success && mounted && authProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error!),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-
+              
               // Header
               const Text(
                 "Welcome Back!",
@@ -80,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
+              
               // Login Form
               Form(
                 key: _formKey,
@@ -98,15 +126,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                           return 'Please enter a valid email';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
-
+                    
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
@@ -116,9 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
                           ),
                           onPressed: () {
                             setState(() {
@@ -138,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 10),
-
+                    
                     // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
@@ -147,8 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const ForgotPasswordScreen(),
+                              builder: (context) => const ForgotPasswordScreen(),
                             ),
                           );
                         },
@@ -156,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 30),
-
+                    
                     // Login Button
                     SizedBox(
                       width: double.infinity,
@@ -164,17 +188,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
+                            ? const CircularProgressIndicator(color: Colors.white)
                             : const Text("Login"),
                       ),
                     ),
                   ],
                 ),
               ),
-
+              
               const SizedBox(height: 40),
-
+              
               // OR Divider
               const Row(
                 children: [
@@ -191,9 +214,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(child: Divider()),
                 ],
               ),
-
+              
               const SizedBox(height: 30),
-
+              
               // Social Login Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -202,31 +225,29 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: Icons.g_mobiledata,
                     label: "Google",
                     color: Colors.red,
-                    onPressed: () {
-                      // TODO: Implement Google login
-                    },
+                    isLoading: _socialLoading[SocialAuthProvider.google]!,
+                    onPressed: () => _socialLogin(SocialAuthProvider.google),
                   ),
                   SocialLoginButton(
                     icon: Icons.facebook,
                     label: "Facebook",
                     color: Colors.blue,
-                    onPressed: () {
-                      // TODO: Implement Facebook login
-                    },
+                    isLoading: _socialLoading[SocialAuthProvider.facebook]!,
+                    onPressed: () => _socialLogin(SocialAuthProvider.facebook),
                   ),
-                  SocialLoginButton(
-                    icon: Icons.apple,
-                    label: "Apple",
-                    color: Colors.black,
-                    onPressed: () {
-                      // TODO: Implement Apple login
-                    },
-                  ),
+                  if (Platform.isIOS || Platform.isMacOS)
+                    SocialLoginButton(
+                      icon: Icons.apple,
+                      label: "Apple",
+                      color: Colors.black,
+                      isLoading: _socialLoading[SocialAuthProvider.apple]!,
+                      onPressed: () => _socialLogin(SocialAuthProvider.apple),
+                    ),
                 ],
               ),
-
+              
               const SizedBox(height: 40),
-
+              
               // Sign Up Link
               Center(
                 child: Row(

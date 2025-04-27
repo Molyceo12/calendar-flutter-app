@@ -5,11 +5,15 @@ import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/models/reminder.dart';
 import 'package:calendar_app/firebase_options.dart';
 import 'package:uuid/uuid.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   static const Uuid _uuid = Uuid();
 
   factory FirebaseService() {
@@ -25,7 +29,7 @@ class FirebaseService {
     );
   }
 
-  // Authentication methods
+  // Email/Password Authentication methods
   Future<User?> signUp(String email, String password, String name) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -36,14 +40,7 @@ class FirebaseService {
 
       if (user != null) {
         // Create user profile in Firestore
-        await _firestore.collection('users').doc(user.uid).set({
-          'name': name,
-          'email': email,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        // Update display name
-        await user.updateDisplayName(name);
+        await _createUserProfile(user, name, email);
       }
 
       return user;
@@ -51,7 +48,7 @@ class FirebaseService {
       print('Error during sign up: $e');
       rethrow;
     }
-  } 
+  }
 
   Future<User?> signIn(String email, String password) async {
     try {
@@ -66,8 +63,178 @@ class FirebaseService {
     }
   }
 
+  // Google Sign In
+  Future<User?> signInWithGoogle() async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User canceled the sign-in flow
+        return null;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the credential
+      UserCredential result = await _auth.signInWithCredential(credential);
+      User? user = result.user;
+
+      if (user != null) {
+        // Check if this is a new user
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+          // Create user profile for new users
+          await _createUserProfile(
+              user,
+              user.displayName ?? googleUser.displayName ?? 'User',
+              user.email ?? googleUser.email);
+        }
+      }
+
+      return user;
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      rethrow;
+    }
+  }
+
+  // Apple Sign In
+  Future<User?> signInWithApple() async {
+    try {
+      // Check if Apple Sign In is available on this device
+      final isAvailable = await SignInWithApple.isAvailable();
+
+      if (!isAvailable) {
+        throw Exception('Apple Sign In is not available on this device');
+      }
+
+      // Request credential for the user
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      // Create an OAuthCredential
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      // Sign in to Firebase with the Apple credential
+      UserCredential result = await _auth.signInWithCredential(oauthCredential);
+      User? user = result.user;
+
+      if (user != null) {
+        // Get user's name from the Apple credential
+        String? fullName;
+        if (appleCredential.givenName != null &&
+            appleCredential.familyName != null) {
+          fullName =
+              '${appleCredential.givenName} ${appleCredential.familyName}';
+        }
+
+        // Check if this is a new user
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+          // Create user profile for new users
+          await _createUserProfile(
+              user,
+              fullName ?? user.displayName ?? 'Apple User',
+              user.email ?? 'noemail@example.com');
+        }
+      }
+
+      return user;
+    } catch (e) {
+      print('Error signing in with Apple: $e');
+      rethrow;
+    }
+  }
+
+  // Facebook Sign In
+  Future<User?> signInWithFacebook() async {
+    try {
+      // Trigger the sign-in flow
+      final LoginResult loginResult = await FacebookAuth.instance.login();
+
+      if (loginResult.status != LoginStatus.success) {
+        throw Exception('Facebook login failed: ${loginResult.message}');
+      }
+
+      // Create a credential from the access token
+      final OAuthCredential facebookAuthCredential =
+          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+
+      // Sign in to Firebase with the Facebook credential
+      UserCredential result =
+          await _auth.signInWithCredential(facebookAuthCredential);
+      User? user = result.user;
+
+      if (user != null) {
+        // Get additional user data from Facebook
+        final userData = await FacebookAuth.instance.getUserData();
+
+        // Check if this is a new user
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+          // Create user profile for new users
+          await _createUserProfile(
+              user,
+              userData['name'] ?? user.displayName ?? 'Facebook User',
+              userData['email'] ?? user.email ?? 'noemail@example.com');
+        }
+      }
+
+      return user;
+    } catch (e) {
+      print('Error signing in with Facebook: $e');
+      rethrow;
+    }
+  }
+
+  // Helper method to create user profile
+  Future<void> _createUserProfile(User user, String name, String email) async {
+    // Update display name if not set
+    if (user.displayName == null || user.displayName!.isEmpty) {
+      await user.updateDisplayName(name);
+    }
+
+    // Create user document in Firestore
+    await _firestore.collection('users').doc(user.uid).set({
+      'name': name,
+      'email': email,
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastLogin': FieldValue.serverTimestamp(),
+      'photoURL': user.photoURL,
+    });
+  }
+
   Future<void> signOut() async {
+    // Sign out from Firebase
     await _auth.signOut();
+
+    // Sign out from Google
+    await _googleSignIn.signOut();
+
+    // Sign out from Facebook
+    await FacebookAuth.instance.logOut();
   }
 
   Future<void> resetPassword(String email) async {
