@@ -178,7 +178,7 @@ class FirebaseService {
 
       // Create a credential from the access token
       final OAuthCredential facebookAuthCredential =
-          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+          FacebookAuthProvider.credential(loginResult.accessToken!.token);
 
       // Sign in to Firebase with the Facebook credential
       UserCredential result =

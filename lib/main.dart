@@ -1,13 +1,17 @@
+import 'package:calendar_app/providers/notification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/screens/onboarding_screen.dart';
 import 'package:calendar_app/screens/auth/login_screen.dart';
-import 'package:calendar_app/screens/home_screen.dart';
+import 'package:calendar_app/screens/main_screen.dart';
 import 'package:calendar_app/services/firebase_service.dart';
+import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/providers/reminder_provider.dart';
+import 'package:calendar_app/providers/sqlite_provider.dart';
+import 'package:calendar_app/providers/api_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -15,6 +19,9 @@ void main() async {
 
   // Initialize Firebase with your generated options
   await FirebaseService.initialize();
+
+  // Initialize notification service
+  await NotificationService.initialize();
 
   // Check if first launch
   final prefs = await SharedPreferences.getInstance();
@@ -35,6 +42,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (_) => ReminderProvider()),
+        ChangeNotifierProvider(create: (_) => SQLiteProvider()),
+        ChangeNotifierProvider(create: (_) => ApiProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -55,7 +65,7 @@ class AuthWrapper extends StatelessWidget {
 
     switch (authProvider.status) {
       case AuthStatus.authenticated:
-        return const HomeScreen();
+        return const MainScreen();
       case AuthStatus.unauthenticated:
         return const LoginScreen();
       case AuthStatus.uninitialized:
