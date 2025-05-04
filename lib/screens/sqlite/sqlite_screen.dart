@@ -7,7 +7,7 @@ import 'package:calendar_app/screens/sqlite/edit_note_screen.dart';
 import 'package:intl/intl.dart';
 
 class SQLiteScreen extends StatefulWidget {
-  const SQLiteScreen({Key? key}) : super(key: key);
+  const SQLiteScreen({super.key});
 
   @override
   State<SQLiteScreen> createState() => _SQLiteScreenState();

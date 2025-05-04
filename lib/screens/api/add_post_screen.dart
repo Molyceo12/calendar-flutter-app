@@ -4,7 +4,7 @@ import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/providers/api_provider.dart';
 
 class AddPostScreen extends StatefulWidget {
-  const AddPostScreen({Key? key}) : super(key: key);
+  const AddPostScreen({super.key});
 
   @override
   State<AddPostScreen> createState() => _AddPostScreenState();

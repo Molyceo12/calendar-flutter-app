@@ -7,7 +7,7 @@ import 'package:calendar_app/screens/api/edit_post_screen.dart';
 import 'package:calendar_app/screens/api/post_detail_screen.dart';
 
 class ApiScreen extends StatefulWidget {
-  const ApiScreen({Key? key}) : super(key: key);
+  const ApiScreen({super.key});
 
   @override
   State<ApiScreen> createState() => _ApiScreenState();

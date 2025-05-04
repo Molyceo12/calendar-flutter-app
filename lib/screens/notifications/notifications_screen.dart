@@ -6,7 +6,7 @@ import 'package:calendar_app/screens/notifications/notification_detail_screen.da
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({Key? key}) : super(key: key);
+  const NotificationsScreen({super.key});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();

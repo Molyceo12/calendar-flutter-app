@@ -6,7 +6,7 @@ import 'package:calendar_app/providers/auth_provider.dart';
 import 'dart:io' show Platform;
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+  const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();

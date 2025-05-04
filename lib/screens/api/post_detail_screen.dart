@@ -8,7 +8,7 @@ import 'package:calendar_app/screens/api/edit_post_screen.dart';
 class PostDetailScreen extends StatefulWidget {
   final int postId;
 
-  const PostDetailScreen({Key? key, required this.postId}) : super(key: key);
+  const PostDetailScreen({super.key, required this.postId});
 
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();

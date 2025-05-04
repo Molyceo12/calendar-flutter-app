@@ -7,11 +7,11 @@ class SectionHeader extends StatelessWidget {
   final double spacing;
 
   const SectionHeader({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     this.spacing = 4,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

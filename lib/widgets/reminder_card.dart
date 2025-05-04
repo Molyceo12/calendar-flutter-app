@@ -7,11 +7,11 @@ class ReminderCard extends StatelessWidget {
   final Color backgroundColor;
 
   const ReminderCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.timeRange,
     this.backgroundColor = AppTheme.accentColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

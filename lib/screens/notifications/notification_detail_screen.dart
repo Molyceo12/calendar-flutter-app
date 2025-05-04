@@ -6,8 +6,7 @@ import 'package:intl/intl.dart';
 class NotificationDetailScreen extends StatelessWidget {
   final NotificationItem notification;
 
-  const NotificationDetailScreen({Key? key, required this.notification})
-      : super(key: key);
+  const NotificationDetailScreen({super.key, required this.notification});
 
   @override
   Widget build(BuildContext context) {

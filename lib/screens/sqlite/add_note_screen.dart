@@ -4,7 +4,7 @@ import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/providers/sqlite_provider.dart';
 
 class AddNoteScreen extends StatefulWidget {
-  const AddNoteScreen({Key? key}) : super(key: key);
+  const AddNoteScreen({super.key});
 
   @override
   State<AddNoteScreen> createState() => _AddNoteScreenState();

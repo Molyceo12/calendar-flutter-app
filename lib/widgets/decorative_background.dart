@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DecorativeBackground extends StatelessWidget {
-  const DecorativeBackground({Key? key}) : super(key: key);
+  const DecorativeBackground({super.key});
 
   @override
   Widget build(BuildContext context) {

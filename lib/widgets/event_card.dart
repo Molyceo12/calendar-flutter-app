@@ -9,12 +9,12 @@ class EventCard extends StatelessWidget {
   final Color backgroundColor;
 
   const EventCard({
-    Key? key,
+    super.key,
     required this.time,
     required this.title,
     this.attendeesCount = 0,
     this.backgroundColor = AppTheme.primaryColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

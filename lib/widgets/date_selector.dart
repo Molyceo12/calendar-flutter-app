@@ -10,12 +10,12 @@ class DateSelector extends StatelessWidget {
   final bool showOtherOption;
 
   const DateSelector({
-    Key? key,
+    super.key,
     required this.dates,
     required this.selectedDate,
     required this.onDateSelected,
     this.showOtherOption = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class DateSelector extends StatelessWidget {
               isSelected: isSelected,
               onTap: () => onDateSelected(date),
             );
-          }).toList(),
+          }),
           
           if (showOtherOption)
             OtherDateCard(

@@ -8,7 +8,7 @@ import 'package:calendar_app/providers/auth_provider.dart';
 import 'dart:io' show Platform;
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();

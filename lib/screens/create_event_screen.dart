@@ -13,7 +13,7 @@ import 'package:uuid/uuid.dart';
 class CreateEventScreen extends StatefulWidget {
   final Event? eventToEdit;
 
-  const CreateEventScreen({Key? key, this.eventToEdit}) : super(key: key);
+  const CreateEventScreen({super.key, this.eventToEdit});
 
   @override
   State<CreateEventScreen> createState() => _CreateEventScreenState();

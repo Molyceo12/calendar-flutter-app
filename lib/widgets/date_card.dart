@@ -8,11 +8,11 @@ class DateCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const DateCard({
-    Key? key,
+    super.key,
     required this.date,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

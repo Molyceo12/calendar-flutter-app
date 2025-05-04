@@ -7,7 +7,7 @@ import 'package:calendar_app/models/post.dart';
 class EditPostScreen extends StatefulWidget {
   final Post post;
 
-  const EditPostScreen({Key? key, required this.post}) : super(key: key);
+  const EditPostScreen({super.key, required this.post});
 
   @override
   State<EditPostScreen> createState() => _EditPostScreenState();

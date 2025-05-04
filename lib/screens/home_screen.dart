@@ -14,7 +14,7 @@ import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/providers/reminder_provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

@@ -8,12 +8,12 @@ class AvatarStack extends StatelessWidget {
   final double spacing;
 
   const AvatarStack({
-    Key? key,
+    super.key,
     required this.count,
     this.backgroundColor = AppTheme.primaryColor,
     this.size = 32,
     this.spacing = 8,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

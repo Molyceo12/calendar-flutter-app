@@ -7,7 +7,7 @@ import 'package:calendar_app/models/note.dart';
 class EditNoteScreen extends StatefulWidget {
   final Note note;
 
-  const EditNoteScreen({Key? key, required this.note}) : super(key: key);
+  const EditNoteScreen({super.key, required this.note});
 
   @override
   State<EditNoteScreen> createState() => _EditNoteScreenState();

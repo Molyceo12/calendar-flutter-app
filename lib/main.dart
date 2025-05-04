@@ -33,7 +33,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   final bool showOnboarding;
 
-  const MyApp({Key? key, required this.showOnboarding}) : super(key: key);
+  const MyApp({super.key, required this.showOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
