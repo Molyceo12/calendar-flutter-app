@@ -1,163 +1,74 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:calendar_app/services/firebase_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:calendar_app/services/auth_service.dart';
 
-enum AuthStatus {
-  uninitialized,
-  authenticated,
-  unauthenticated,
-}
+// Auth service provider
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
+});
 
-enum SocialAuthProvider {
-  google,
-  apple,
-  facebook,
-}
+// Auth state provider
+final authStateProvider = StreamProvider<User?>((ref) {
+  final authService = ref.watch(authServiceProvider);
+  return authService.authStateChanges;
+});
 
-class AuthProvider with ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
-  AuthStatus _status = AuthStatus.uninitialized;
-  User? _user;
-  String? _error;
-  bool _isLoading = false;
+// Current user ID provider
+final userIdProvider = Provider<String?>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return authState.when(
+    data: (user) => user?.uid,
+    loading: () => null,
+    error: (_, __) => null,
+  );
+});
 
-  AuthStatus get status => _status;
-  User? get user => _user;
-  String? get error => _error;
-  bool get isLoading => _isLoading;
-  bool get isAuthenticated => _status == AuthStatus.authenticated;
+// Auth controller provider
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
+  final authService = ref.watch(authServiceProvider);
+  return AuthController(authService);
+});
 
-  AuthProvider() {
-    // Listen for auth state changes
-    _firebaseService.authStateChanges.listen((User? user) {
-      if (user == null) {
-        _status = AuthStatus.unauthenticated;
-      } else {
-        _user = user;
-        _status = AuthStatus.authenticated;
-      }
-      notifyListeners();
-    });
-  }
+// Auth controller
+class AuthController extends StateNotifier<AsyncValue<void>> {
+  final AuthService _authService;
 
-  Future<bool> signUp(String email, String password, String name) async {
+  AuthController(this._authService) : super(const AsyncValue.data(null));
+
+  // Sign in with email and password
+  Future<void> signIn(String email, String password) async {
+    state = const AsyncValue.loading();
     try {
-      _setLoading(true);
-      _error = null;
-      await _firebaseService.signUp(email, password, name);
-      return true;
-    } catch (e) {
-      _error = _handleAuthError(e);
-      notifyListeners();
-      return false;
-    } finally {
-      _setLoading(false);
+      await _authService.signInWithEmailAndPassword(email, password);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 
-  Future<bool> signIn(String email, String password) async {
+  // Register with email and password
+  Future<void> register(String email, String password) async {
+    state = const AsyncValue.loading();
     try {
-      _setLoading(true);
-      _error = null;
-      await _firebaseService.signIn(email, password);
-      return true;
-    } catch (e) {
-      _error = _handleAuthError(e);
-      notifyListeners();
-      return false;
-    } finally {
-      _setLoading(false);
+      await _authService.createUserWithEmailAndPassword(email, password);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 
-  Future<bool> signInWithSocial(SocialAuthProvider provider) async {
-    try {
-      _setLoading(true);
-      _error = null;
-
-      User? user;
-
-      switch (provider) {
-        case SocialAuthProvider.google:
-          user = await _firebaseService.signInWithGoogle();
-          break;
-        case SocialAuthProvider.apple:
-          user = await _firebaseService.signInWithApple();
-          break;
-        case SocialAuthProvider.facebook:
-          user = await _firebaseService.signInWithFacebook();
-          break;
-      }
-
-      return user != null;
-    } catch (e) {
-      _error = _handleAuthError(e);
-      notifyListeners();
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
+  // Sign out
   Future<void> signOut() async {
+    state = const AsyncValue.loading();
     try {
-      _setLoading(true);
-      await _firebaseService.signOut();
-      _status = AuthStatus.unauthenticated;
-    } catch (e) {
-      _error = _handleAuthError(e);
-    } finally {
-      _setLoading(false);
+      await _authService.signOut();
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
     }
-  }
-
-  Future<bool> resetPassword(String email) async {
-    try {
-      _setLoading(true);
-      _error = null;
-      await _firebaseService.resetPassword(email);
-      return true;
-    } catch (e) {
-      _error = _handleAuthError(e);
-      notifyListeners();
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
-
-  String _handleAuthError(dynamic e) {
-    if (e is FirebaseAuthException) {
-      switch (e.code) {
-        case 'user-not-found':
-          return 'No user found with this email.';
-        case 'wrong-password':
-          return 'Wrong password provided.';
-        case 'email-already-in-use':
-          return 'The email address is already in use.';
-        case 'weak-password':
-          return 'The password is too weak.';
-        case 'invalid-email':
-          return 'The email address is invalid.';
-        case 'account-exists-with-different-credential':
-          return 'An account already exists with the same email address but different sign-in credentials.';
-        case 'invalid-credential':
-          return 'The credential is invalid or has expired.';
-        case 'operation-not-allowed':
-          return 'This operation is not allowed. Contact support.';
-        case 'user-disabled':
-          return 'This user account has been disabled.';
-        case 'popup-closed-by-user':
-          return 'The sign-in popup was closed before completing the sign in.';
-        default:
-          return 'Authentication error: ${e.message}';
-      }
-    }
-    return 'An error occurred. Please try again.';
   }
 }

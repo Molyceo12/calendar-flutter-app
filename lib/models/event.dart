@@ -1,44 +1,68 @@
+import 'package:uuid/uuid.dart';
+
 class Event {
   final String id;
   final String title;
+  final String description;
   final DateTime date;
-  final String startTime;
-  final String endTime;
-  final String category;
-  final String note;
-  final List<String> attendees;
+  final String color;
+  final bool hasNotification;
+  final String userId;
 
   Event({
-    required this.id,
+    String? id,
     required this.title,
+    this.description = '',
     required this.date,
-    required this.startTime,
-    required this.endTime,
-    required this.category,
-    this.note = '',
-    this.attendees = const [],
-  });
+    this.color = '#4CAF50', // Default green color
+    this.hasNotification = false,
+    required this.userId,
+  }) : id = id ?? const Uuid().v4();
 
-  // Create a copy of the event with updated fields
+  // Create a copy with modified fields
   Event copyWith({
     String? id,
     String? title,
+    String? description,
     DateTime? date,
-    String? startTime,
-    String? endTime,
-    String? category,
-    String? note,
-    List<String>? attendees,
+    String? color,
+    bool? hasNotification,
+    String? userId,
   }) {
     return Event(
       id: id ?? this.id,
       title: title ?? this.title,
+      description: description ?? this.description,
       date: date ?? this.date,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      category: category ?? this.category,
-      note: note ?? this.note,
-      attendees: attendees ?? this.attendees,
+      color: color ?? this.color,
+      hasNotification: hasNotification ?? this.hasNotification,
+      userId: userId ?? this.userId,
+    );
+  }
+
+  // Convert to Map for SQLite
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'date': date.millisecondsSinceEpoch,
+      'color': color,
+      'has_notification': hasNotification ? 1 : 0,
+      'user_id': userId,
+    };
+  }
+
+  // Create from Map (SQLite)
+  factory Event.fromMap(Map<String, dynamic> map) {
+    return Event(
+      id: map['id'],
+      title: map['title'],
+      description: map['description'] ?? '',
+      date: DateTime.fromMillisecondsSinceEpoch(map['date']),
+      color: map['color'],
+      hasNotification: map['has_notification'] == 1,
+      userId: map['user_id'],
     );
   }
 }

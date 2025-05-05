@@ -1,42 +1,40 @@
 name: calendar_app
-description: A calendar mobile app.
+description: A minimal calendar app with three screens.
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
-  intl: ^0.20.2
+  cupertino_icons: ^1.0.5
   
-  # Firebase packages
+  # State Management
+  flutter_riverpod: ^2.3.6
+  
+  # Local Storage
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  shared_preferences: ^2.2.0
+  
+  # Authentication
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.3
-  cloud_firestore: ^5.6.7
-  firebase_analytics: ^11.4.5
-  firebase_messaging: ^15.2.5
-  flutter_local_notifications: ^19.1.0
   
-  # Social authentication
-  google_sign_in: ^6.1.4
-  sign_in_with_apple: ^7.0.1
-  flutter_facebook_auth: ^7.1.2
+  # Notifications
+  timezone: ^0.10.1
   
-  # Database
-  sqflite: ^2.2.8+4
-  path: ^1.8.3
+  # Date & Time
+  intl: ^0.20.2
   
-  # API
-  http: ^1.1.0
-  dio: ^5.3.0
+  # UI
+  table_calendar: ^3.0.9
   
-  # Additional utilities
-  provider: ^6.0.5
-  shared_preferences: ^2.2.0
+  # Utils
   uuid: ^4.5.1
+  flutter_local_notifications: ^19.1.0
 
 dev_dependencies:
   flutter_test:
@@ -45,11 +43,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: fonts/Roboto-Regular.ttf
-        - asset: fonts/Roboto-Medium.ttf
-          weight: 500
-        - asset: fonts/Roboto-Bold.ttf
-          weight: 700

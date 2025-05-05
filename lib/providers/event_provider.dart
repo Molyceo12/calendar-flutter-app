@@ -1,104 +1,121 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:calendar_app/models/event.dart';
-import 'package:calendar_app/services/firebase_service.dart';
+import 'package:calendar_app/services/database_service.dart';
+import 'package:calendar_app/services/notification_service.dart';
+import 'package:calendar_app/providers/auth_provider.dart';
 
-class EventProvider with ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
-  List<Event> _events = [];
-  bool _isLoading = false;
-  String? _error;
+// Database service provider
+final databaseServiceProvider = Provider<DatabaseService>((ref) {
+  return DatabaseService();
+});
 
-  List<Event> get events => _events;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+// Notification service provider
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
+});
 
-  EventProvider() {
-    fetchEvents();
+// Events for month provider
+final eventsForMonthProvider =
+    FutureProvider.family<List<Event>, DateTime>((ref, month) async {
+  final dbService = ref.watch(databaseServiceProvider);
+  final userId = ref.watch(userIdProvider);
+
+  if (userId == null) {
+    return [];
   }
 
-  Future<void> fetchEvents() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  return await dbService.getEventsForMonth(month, userId);
+});
 
+// Event controller provider
+final eventControllerProvider =
+    StateNotifierProvider<EventController, AsyncValue<void>>((ref) {
+  final dbService = ref.watch(databaseServiceProvider);
+  final notificationService = ref.watch(notificationServiceProvider);
+  return EventController(dbService, notificationService, ref);
+});
+
+// Event controller
+class EventController extends StateNotifier<AsyncValue<void>> {
+  final DatabaseService _dbService;
+  final NotificationService _notificationService;
+  final Ref _ref;
+
+  EventController(this._dbService, this._notificationService, this._ref)
+      : super(const AsyncValue.data(null));
+
+  // Create a new event
+  Future<void> createEvent(Event event) async {
+    state = const AsyncValue.loading();
     try {
-      _events = await _firebaseService.getEvents();
-    } catch (e) {
-      _error = 'Failed to load events: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+      // Save to SQLite
+      await _dbService.insertEvent(event);
 
-  Stream<List<Event>> get eventsStream => _firebaseService.getEventsStream();
-
-  List<Event> getEventsForDate(DateTime date) {
-    return _events.where((event) {
-      return event.date.year == date.year &&
-          event.date.month == date.month &&
-          event.date.day == date.day;
-    }).toList();
-  }
-
-  Future<void> addEvent(Event event) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      String eventId = await _firebaseService.createEvent(event);
-      Event newEvent = Event(
-        id: eventId,
-        title: event.title,
-        date: event.date,
-        startTime: event.startTime,
-        endTime: event.endTime,
-        category: event.category,
-        note: event.note,
-        attendees: event.attendees,
-      );
-      _events.add(newEvent);
-    } catch (e) {
-      _error = 'Failed to add event: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateEvent(Event event) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      await _firebaseService.updateEvent(event);
-      int index = _events.indexWhere((e) => e.id == event.id);
-      if (index != -1) {
-        _events[index] = event;
+      // Schedule notification if needed
+      if (event.hasNotification) {
+        await _notificationService.scheduleEventNotification(event);
       }
-    } catch (e) {
-      _error = 'Failed to update event: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+
+      // Refresh events list
+      _ref.invalidate(eventsForMonthProvider);
+
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 
-  Future<void> deleteEvent(String eventId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
+  // Update an existing event
+  Future<void> updateEvent(Event event) async {
+    state = const AsyncValue.loading();
     try {
-      await _firebaseService.deleteEvent(eventId);
-      _events.removeWhere((event) => event.id == eventId);
-    } catch (e) {
-      _error = 'Failed to delete event: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      // Update in SQLite
+      await _dbService.updateEvent(event);
+
+      // Cancel existing notification and schedule a new one if needed
+      await _notificationService.cancelEventNotification(event);
+      if (event.hasNotification) {
+        await _notificationService.scheduleEventNotification(event);
+      }
+
+      // Refresh events list
+      _ref.invalidate(eventsForMonthProvider);
+
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
+    }
+  }
+
+  // Delete an event
+  Future<void> deleteEvent(String id) async {
+    state = const AsyncValue.loading();
+    try {
+      // Get the event first to cancel notification
+      final userId = _ref.read(userIdProvider);
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final events = await _dbService.getEventsForUser(userId);
+      final event = events.firstWhere((e) => e.id == id,
+          orElse: () => throw Exception('Event not found'));
+
+      // Cancel notification
+      await _notificationService.cancelEventNotification(event);
+
+      // Delete from SQLite
+      await _dbService.deleteEvent(id);
+
+      // Refresh events list
+      _ref.invalidate(eventsForMonthProvider);
+
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 }
