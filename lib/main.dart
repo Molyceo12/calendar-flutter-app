@@ -1,3 +1,4 @@
+import 'package:calendar_app/firebase_options.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/screens/auth_screen.dart';
 import 'package:calendar_app/screens/home_screen.dart';
@@ -13,7 +14,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize notification service
   await NotificationService().initialize();

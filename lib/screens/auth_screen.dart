@@ -1,4 +1,5 @@
 import 'package:calendar_app/providers/auth_provider.dart';
+import 'package:calendar_app/screens/home_screen.dart';
 import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/widgets/decorative_background.dart';
 import 'package:flutter/material.dart';
@@ -49,9 +50,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               _passwordController.text,
             );
       }
+      // Navigate to HomeScreen after successful login/register
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
     } catch (e) {
+      String errorMsg = e.toString();
+      // Extract only the error message after the last ']'
+      if (errorMsg.contains(']')) {
+        errorMsg = errorMsg.split(']').last.trim();
+      }
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = errorMsg;
       });
     } finally {
       if (mounted) {
