@@ -12,10 +12,10 @@ class SetScheduleScreen extends ConsumerStatefulWidget {
   final Event? event;
 
   const SetScheduleScreen({
-    Key? key,
+    super.key,
     this.selectedDate,
     this.event,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<SetScheduleScreen> createState() => _SetScheduleScreenState();

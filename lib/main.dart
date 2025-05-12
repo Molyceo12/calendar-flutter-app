@@ -33,9 +33,9 @@ class MyApp extends ConsumerWidget {
   final bool showOnboarding;
 
   const MyApp({
-    Key? key,
+    super.key,
     required this.showOnboarding,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

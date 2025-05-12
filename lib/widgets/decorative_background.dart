@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DecorativeBackground extends StatelessWidget {
-  const DecorativeBackground({Key? key}) : super(key: key);
+  const DecorativeBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +15,9 @@ class DecorativeBackground extends StatelessWidget {
           shape: BoxShape.circle,
           gradient: LinearGradient(
             colors: [
-              const Color(0xFFB2DFDB).withOpacity(0.7),
-              const Color(0xFFF48FB1).withOpacity(0.7),
-              const Color(0xFFB39DDB).withOpacity(0.7),
+              const Color(0xFFB2DFDB).withValues(alpha: 0.7),
+              const Color(0xFFF48FB1).withValues(alpha: 0.7),
+              const Color(0xFFB39DDB).withValues(alpha: 0.7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
