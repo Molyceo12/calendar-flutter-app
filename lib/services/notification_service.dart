@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -45,7 +46,7 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         // Handle notification tap
-        print('Notification tapped: ${response.payload}');
+        debugPrint('Notification tapped: ${response.payload}');
       },
     );
   }
@@ -59,7 +60,7 @@ class NotificationService {
 
     // Check if notification time is in the future
     if (notificationTime.isBefore(DateTime.now())) {
-      print('Notification time is in the past, not scheduling');
+      debugPrint('Notification time is in the past, not scheduling');
       return;
     }
 

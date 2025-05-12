@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
+import 'package:calendar_app/theme/app_theme.dart';
+import 'package:calendar_app/widgets/decorative_background.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class SetScheduleScreen extends ConsumerStatefulWidget {
@@ -10,10 +12,10 @@ class SetScheduleScreen extends ConsumerStatefulWidget {
   final Event? event;
 
   const SetScheduleScreen({
-    super.key,
+    Key? key,
     this.selectedDate,
     this.event,
-  });
+  }) : super(key: key);
 
   @override
   ConsumerState<SetScheduleScreen> createState() => _SetScheduleScreenState();
@@ -24,16 +26,16 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late DateTime _selectedDate;
-  String _selectedColor = '#4CAF50';
+  String _selectedColor = '#EC4899'; // Default to primary color
   bool _hasNotification = false;
   bool _isLoading = false;
 
   final List<Map<String, String>> _colorOptions = [
-    {'name': 'Green', 'value': '#4CAF50'},
-    {'name': 'Blue', 'value': '#2196F3'},
-    {'name': 'Red', 'value': '#F44336'},
-    {'name': 'Purple', 'value': '#9C27B0'},
-    {'name': 'Orange', 'value': '#FF9800'},
+    {'name': 'Pink', 'value': '#EC4899'},
+    {'name': 'Purple', 'value': '#7C4DFF'},
+    {'name': 'Indigo', 'value': '#6366F1'},
+    {'name': 'Orange', 'value': '#F59E0B'},
+    {'name': 'Green', 'value': '#10B981'},
   ];
 
   @override
@@ -69,6 +71,18 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textPrimaryColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
@@ -89,6 +103,18 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selectedDate),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textPrimaryColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
@@ -136,7 +162,10 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Event updated successfully')),
+            const SnackBar(
+              content: Text('Event updated successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
           Navigator.of(context).pop();
         }
@@ -155,7 +184,10 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Event created successfully')),
+            const SnackBar(
+              content: Text('Event created successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
           Navigator.of(context).pop();
         }
@@ -163,7 +195,10 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -178,153 +213,227 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.event != null ? 'Edit Event' : 'Add Event'),
+        title: Text(
+          widget.event != null ? 'Edit Event' : 'Add Event',
+          style: const TextStyle(color: AppTheme.textPrimaryColor),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Title field
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a title';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
+      body: Stack(
+        children: [
+          // Decorative background
+          const DecorativeBackground(),
 
-            // Description field
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
+          SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  // Header
+                  Text(
+                    widget.event != null
+                        ? "Update your\nschedule"
+                        : "Let's set the\nschedule easily",
+                    style: AppTheme.headingLarge,
+                  ),
+                  const SizedBox(height: 32),
 
-            // Date and time
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Date & Time',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  // Title field
+                  const Text(
+                    "Event Title",
+                    style: AppTheme.headingSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Enter event title...",
+                        hintStyle: TextStyle(color: AppTheme.textTertiaryColor),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a title';
+                        }
+                        return null;
+                      },
                     ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.calendar_today),
-                      title: Text(DateFormat('EEEE, MMMM d, yyyy')
-                          .format(_selectedDate)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => _selectDate(context),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.access_time),
-                      title: Text(DateFormat('h:mm a').format(_selectedDate)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => _selectTime(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 24),
 
-            // Color selection
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Color',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  // Date and time
+                  const Text(
+                    "Date & Time",
+                    style: AppTheme.headingSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Card(
+                    elevation: 0,
+                    color: AppTheme.surfaceColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: _colorOptions.map((color) {
-                        final isSelected = _selectedColor == color['value'];
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedColor = color['value']!;
-                            });
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Color(int.parse(
-                                      color['value']!.substring(1),
-                                      radix: 16) +
-                                  0xFF000000),
-                              shape: BoxShape.circle,
-                              border: isSelected
-                                  ? Border.all(color: Colors.black, width: 2)
-                                  : null,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.calendar_today,
+                                color: AppTheme.primaryColor),
+                            title: Text(
+                              DateFormat('EEEE, MMMM d, yyyy')
+                                  .format(_selectedDate),
+                              style: AppTheme.bodyMedium,
                             ),
-                            child: isSelected
-                                ? const Icon(Icons.check, color: Colors.white)
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () => _selectDate(context),
+                          ),
+                          const Divider(),
+                          ListTile(
+                            leading: const Icon(Icons.access_time,
+                                color: AppTheme.primaryColor),
+                            title: Text(
+                              DateFormat('h:mm a').format(_selectedDate),
+                              style: AppTheme.bodyMedium,
+                            ),
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () => _selectTime(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Description field
+                  const Text(
+                    "Description",
+                    style: AppTheme.headingSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TextFormField(
+                      controller: _descriptionController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: "Add description here...",
+                        hintStyle: TextStyle(color: AppTheme.textTertiaryColor),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Color selection
+                  const Text(
+                    "Color",
+                    style: AppTheme.headingSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: _colorOptions.map((color) {
+                      final isSelected = _selectedColor == color['value'];
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedColor = color['value']!;
+                          });
+                        },
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Color(int.parse(color['value']!.substring(1),
+                                    radix: 16) +
+                                0xFF000000),
+                            shape: BoxShape.circle,
+                            border: isSelected
+                                ? Border.all(color: Colors.white, width: 3)
+                                : null,
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Color(int.parse(
+                                              color['value']!.substring(1),
+                                              radix: 16) +
+                                          0x33000000),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
                                 : null,
                           ),
-                        );
-                      }).toList(),
+                          child: isSelected
+                              ? const Icon(Icons.check, color: Colors.white)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Notification switch
+                  SwitchListTile(
+                    title: const Text(
+                      'Reminder Notification',
+                      style: AppTheme.bodyLarge,
                     ),
-                  ],
-                ),
+                    subtitle: const Text(
+                      '30 minutes before event',
+                      style: AppTheme.bodySmall,
+                    ),
+                    value: _hasNotification,
+                    activeColor: AppTheme.primaryColor,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    onChanged: (value) {
+                      setState(() {
+                        _hasNotification = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _saveEvent,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(widget.event != null
+                              ? 'Update Event'
+                              : 'Save Event'),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Notification switch
-            SwitchListTile(
-              title: const Text('Reminder Notification'),
-              subtitle: const Text('30 minutes before event'),
-              value: _hasNotification,
-              onChanged: (value) {
-                setState(() {
-                  _hasNotification = value;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Save button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveEvent,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : Text(widget.event != null ? 'Update Event' : 'Add Event'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
