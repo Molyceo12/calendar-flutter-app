@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // App colors
+  // Light Theme Colors
   static const Color primaryColor = Color(0xFFEC4899);
   static const Color secondaryColor = Color(0xFF7C4DFF);
   static const Color accentColor = Color(0xFF6366F1);
-  static const Color backgroundColor = Colors.white;
+
+  static const Color backgroundColor = Color(0xFFFFFFFF);
   static const Color surfaceColor = Color(0xFFF1F5F9);
+
   static const Color textPrimaryColor = Color(0xFF1E293B);
   static const Color textSecondaryColor = Color(0xFF64748B);
   static const Color textTertiaryColor = Color(0xFF94A3B8);
 
-  // Category colors
   static const Map<String, Color> categoryColors = {
     "Meeting": Color(0xFFFFA000),
     "Hangout": Color(0xFF9C27B0),
@@ -20,7 +21,19 @@ class AppTheme {
     "Weekend": Color(0xFF2E7D32),
   };
 
-  // Text styles
+  // Dark Theme Colors
+  static const Color darkPrimaryColor = Color(0xFFEC4899);
+  static const Color darkSecondaryColor = Color(0xFF8B5CF6);
+  static const Color darkAccentColor = Color(0xFF6366F1);
+
+  static const Color darkBackgroundColor = Color(0xFF121212);
+  static const Color darkSurfaceColor = Color(0xFF1E1E1E);
+
+  static const Color darkTextPrimaryColor = Color(0xFFE0E0E0);
+  static const Color darkTextSecondaryColor = Color(0xFFB0B0B0);
+  static const Color darkTextTertiaryColor = Color(0xFF888888);
+
+  // Light text styles
   static const TextStyle headingLarge = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.bold,
@@ -56,59 +69,7 @@ class AppTheme {
     color: textSecondaryColor,
   );
 
-  // Theme data
-  static final ThemeData lightTheme = ThemeData(
-    primaryColor: primaryColor,
-    scaffoldBackgroundColor: backgroundColor,
-    fontFamily: 'Roboto',
-    textTheme: const TextTheme(
-      displayLarge: headingLarge,
-      displayMedium: headingMedium,
-      displaySmall: headingSmall,
-      bodyLarge: bodyLarge,
-      bodyMedium: bodyMedium,
-      bodySmall: bodySmall,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        textStyle: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      border: InputBorder.none,
-      hintStyle: const TextStyle(color: textTertiaryColor),
-      filled: true,
-      fillColor: surfaceColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide.none,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide.none,
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
-  );
-
-  // Dark theme colors
-  static const Color darkPrimaryColor = Color(0xFFEC4899);
-  static const Color darkBackgroundColor = Color(0xFF121212);
-  static const Color darkSurfaceColor = Color(0xFF1E1E1E);
-  static const Color darkTextPrimaryColor = Color(0xFFE0E0E0);
-  static const Color darkTextSecondaryColor = Color(0xFFB0B0B0);
-  static const Color darkTextTertiaryColor = Color(0xFF888888);
-
-  // Dark theme text styles
+  // Dark text styles
   static const TextStyle darkHeadingLarge = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.bold,
@@ -144,9 +105,68 @@ class AppTheme {
     color: darkTextSecondaryColor,
   );
 
-  // Dark theme data
+  static final ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.light,
+      primary: primaryColor,
+      secondary: secondaryColor,
+      surface: surfaceColor,
+      onSurface: textPrimaryColor,
+      error: Colors.red,
+    ),
+    scaffoldBackgroundColor: backgroundColor,
+    fontFamily: 'Roboto',
+    textTheme: const TextTheme(
+      displayLarge: headingLarge,
+      displayMedium: headingMedium,
+      displaySmall: headingSmall,
+      bodyLarge: bodyLarge,
+      bodyMedium: bodyMedium,
+      bodySmall: bodySmall,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        textStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      hintStyle: const TextStyle(color: textTertiaryColor),
+      filled: true,
+      fillColor: surfaceColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  );
+
   static final ThemeData darkTheme = ThemeData(
-    primaryColor: darkPrimaryColor,
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: darkPrimaryColor,
+      brightness: Brightness.dark,
+      primary: darkPrimaryColor,
+      secondary: darkSecondaryColor,
+      surface: darkSurfaceColor,
+      onSurface: darkTextPrimaryColor,
+      error: Colors.red.shade300,
+    ),
     scaffoldBackgroundColor: darkBackgroundColor,
     fontFamily: 'Roboto',
     textTheme: const TextTheme(
@@ -172,7 +192,6 @@ class AppTheme {
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
-      border: InputBorder.none,
       hintStyle: const TextStyle(color: darkTextTertiaryColor),
       filled: true,
       fillColor: darkSurfaceColor,
