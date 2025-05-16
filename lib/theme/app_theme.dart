@@ -99,4 +99,92 @@ class AppTheme {
       ),
     ),
   );
+
+  // Dark theme colors
+  static const Color darkPrimaryColor = Color(0xFFEC4899);
+  static const Color darkBackgroundColor = Color(0xFF121212);
+  static const Color darkSurfaceColor = Color(0xFF1E1E1E);
+  static const Color darkTextPrimaryColor = Color(0xFFE0E0E0);
+  static const Color darkTextSecondaryColor = Color(0xFFB0B0B0);
+  static const Color darkTextTertiaryColor = Color(0xFF888888);
+
+  // Dark theme text styles
+  static const TextStyle darkHeadingLarge = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    color: darkTextPrimaryColor,
+    height: 1.2,
+  );
+
+  static const TextStyle darkHeadingMedium = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: darkTextPrimaryColor,
+  );
+
+  static const TextStyle darkHeadingSmall = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
+    color: darkTextPrimaryColor,
+  );
+
+  static const TextStyle darkBodyLarge = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+    color: darkTextPrimaryColor,
+  );
+
+  static const TextStyle darkBodyMedium = TextStyle(
+    fontSize: 16,
+    color: darkTextPrimaryColor,
+  );
+
+  static const TextStyle darkBodySmall = TextStyle(
+    fontSize: 14,
+    color: darkTextSecondaryColor,
+  );
+
+  // Dark theme data
+  static final ThemeData darkTheme = ThemeData(
+    primaryColor: darkPrimaryColor,
+    scaffoldBackgroundColor: darkBackgroundColor,
+    fontFamily: 'Roboto',
+    textTheme: const TextTheme(
+      displayLarge: darkHeadingLarge,
+      displayMedium: darkHeadingMedium,
+      displaySmall: darkHeadingSmall,
+      bodyLarge: darkBodyLarge,
+      bodyMedium: darkBodyMedium,
+      bodySmall: darkBodySmall,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: darkPrimaryColor,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        textStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: InputBorder.none,
+      hintStyle: const TextStyle(color: darkTextTertiaryColor),
+      filled: true,
+      fillColor: darkSurfaceColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  );
 }

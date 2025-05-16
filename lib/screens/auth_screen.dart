@@ -1,6 +1,6 @@
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/screens/home_screen.dart';
-import 'package:calendar_app/theme/app_theme.dart';
+import 'package:calendar_app/widgets/auth_form.dart';
 import 'package:calendar_app/widgets/decorative_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,71 +13,33 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   bool _isLogin = true;
-  bool _isLoading = false;
-  bool _obscurePassword = true;
-  String? _errorMessage;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void _toggleAuthMode() {
+    setState(() {
+      _isLogin = !_isLogin;
+    });
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
+  Future<void> _handleSubmit(String email, String password) async {
+    if (_isLogin) {
+      await ref.read(authControllerProvider.notifier).signIn(email, password);
+    } else {
+      await ref.read(authControllerProvider.notifier).register(email, password);
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      if (_isLogin) {
-        await ref.read(authControllerProvider.notifier).signIn(
-              _emailController.text.trim(),
-              _passwordController.text,
-            );
-      } else {
-        await ref.read(authControllerProvider.notifier).register(
-              _emailController.text.trim(),
-              _passwordController.text,
-            );
-      }
-      // Navigate to HomeScreen after successful login/register
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      }
-    } catch (e) {
-      String errorMsg = e.toString();
-      // Extract only the error message after the last ']'
-      if (errorMsg.contains(']')) {
-        errorMsg = errorMsg.split(']').last.trim();
-      }
-      setState(() {
-        _errorMessage = errorMsg;
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    // Navigate to HomeScreen after successful login/register
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Decorative background
@@ -86,143 +48,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 40),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
 
-                    // Header
-                    Text(
-                      _isLogin ? "Welcome Back!" : "Create Account",
-                      style: AppTheme.headingLarge,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _isLogin
-                          ? "Sign in to continue"
-                          : "Sign up to get started",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: AppTheme.textSecondaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-
-                    // Email Field
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: "Email",
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Password Field
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: "Password",
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Error message
-                    if (_errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-
-                    const SizedBox(height: 30),
-
-                    // Login/Register Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
-                            : Text(_isLogin ? "Login" : "Sign Up"),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Toggle login/register
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _isLogin
-                                ? "Don't have an account? "
-                                : "Already have an account? ",
-                            style: const TextStyle(
-                              color: AppTheme.textSecondaryColor,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isLogin = !_isLogin;
-                                _errorMessage = null;
-                              });
-                            },
-                            child: Text(
-                              _isLogin ? "Sign Up" : "Login",
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  // Auth Form
+                  AuthForm(
+                    isLogin: _isLogin,
+                    onToggleAuthMode: _toggleAuthMode,
+                    onSubmit: _handleSubmit,
+                  ),
+                ],
               ),
             ),
           ),

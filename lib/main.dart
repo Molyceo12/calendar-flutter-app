@@ -1,5 +1,6 @@
 import 'package:calendar_app/firebase_options.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
+import 'package:calendar_app/providers/theme_provider.dart';
 import 'package:calendar_app/screens/auth_screen.dart';
 import 'package:calendar_app/screens/home_screen.dart';
 import 'package:calendar_app/screens/onboarding_screen.dart';
@@ -43,10 +44,13 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
+    final themeMode = ref.watch(themeProvider).themeMode;
 
     return MaterialApp(
       title: 'Calendar App',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       home: showOnboarding
           ? const OnboardingScreen()
           : authState.when(
@@ -54,8 +58,7 @@ class MyApp extends ConsumerWidget {
                   user != null ? const HomeScreen() : const AuthScreen(),
               loading: () => const Scaffold(
                 body: Center(
-                  child:
-                      CircularProgressIndicator(color: AppTheme.primaryColor),
+                  child: CircularProgressIndicator(color: AppTheme.primaryColor),
                 ),
               ),
               error: (_, __) => const AuthScreen(),
