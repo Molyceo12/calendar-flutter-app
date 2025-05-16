@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:calendar_app/theme/app_theme.dart';
-import 'package:calendar_app/models/event.dart'; // Assuming you have an Event model
+import 'package:calendar_app/models/event.dart';
 import 'package:intl/intl.dart';
 
 class EventCard extends StatelessWidget {
@@ -17,6 +16,9 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -39,39 +41,39 @@ class EventCard extends StatelessWidget {
         ),
         title: Text(
           event.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (event.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(event.description),
+              Text(
+                event.description,
+                style: textTheme.bodyMedium,
+              ),
             ],
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.access_time,
                   size: 16,
-                  color: AppTheme.textSecondaryColor,
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('h:mm a').format(event.date),
-                  style: const TextStyle(
-                    color: AppTheme.textSecondaryColor,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 if (event.hasNotification) ...[
                   const SizedBox(width: 12),
-                  const Icon(
+                  Icon(
                     Icons.notifications_active,
                     size: 16,
-                    color: AppTheme.primaryColor,
+                    color: colorScheme.primary,
                   ),
                 ],
               ],
@@ -82,7 +84,7 @@ class EventCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, color: AppTheme.secondaryColor),
+              icon: Icon(Icons.edit, color: colorScheme.secondary),
               onPressed: onEdit,
             ),
             IconButton(

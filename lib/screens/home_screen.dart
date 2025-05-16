@@ -1,14 +1,13 @@
-import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/screens/set_schedule_screen.dart';
-import 'package:calendar_app/widgets/custom_app_bar.dart';
-import 'package:calendar_app/widgets/custom_calendar.dart';
-import 'package:calendar_app/widgets/date_header.dart';
-import 'package:calendar_app/widgets/empty_events_view.dart';
-import 'package:calendar_app/widgets/event_card.dart';
+import 'package:calendar_app/theme/app_theme.dart';
+import 'package:calendar_app/widgets/add_event_fab.dart';
+import 'package:calendar_app/widgets/calendar_app_bar.dart';
+import 'package:calendar_app/widgets/calendar_widget.dart';
 import 'package:calendar_app/widgets/confirmation_dialog.dart';
-import 'package:calendar_app/widgets/custom_snackbar.dart';
+import 'package:calendar_app/widgets/events_list.dart';
+import 'package:calendar_app/widgets/selected_date_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -38,146 +37,123 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: CustomAppBar(
+      appBar: CalendarAppBar(
         title: 'Calendar',
-        onLogout: _showLogoutDialog,
+        onLogoutPressed: _showLogoutDialog,
       ),
       body: Column(
         children: [
           // Calendar widget
-          eventsAsync.when(
-            data: (events) => CustomCalendar(
-              focusedDay: _focusedDay,
-              selectedDay: _selectedDay,
-              calendarFormat: _calendarFormat,
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-              },
-              onFormatChanged: (format) {
-                setState(() {
-                  _calendarFormat = format;
-                });
-              },
-              onPageChanged: (focusedDay) {
+          CalendarWidget(
+            calendarFormat: _calendarFormat,
+            focusedDay: _focusedDay,
+            selectedDay: _selectedDay,
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
-              },
-              events: events,
-            ),
-            loading: () => const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (_, __) => const SizedBox(height: 300),
+              });
+            },
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+            eventsAsync: eventsAsync,
           ),
 
           // Selected day header
-          if (_selectedDay != null) DateHeader(selectedDay: _selectedDay!),
+          SelectedDateHeader(selectedDay: _selectedDay!),
 
           const Divider(),
 
           // Events list for selected day
           Expanded(
-            child: eventsAsync.when(
-              data: (events) {
-                final dayEvents = events
-                    .where((event) => isSameDay(event.date, _selectedDay))
-                    .toList();
-
-                if (dayEvents.isEmpty) {
-                  return EmptyEventsView(
-                    onAddEvent: () => _navigateToAddEvent(_selectedDay!),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: dayEvents.length,
-                  itemBuilder: (context, index) {
-                    final event = dayEvents[index];
-                    return EventCard(
-                      event: event,
-                      onEdit: () => _navigateToEditEvent(event),
-                      onDelete: () => _deleteEvent(event.id),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Text('Error loading events: $error'),
-              ),
+            child: EventsList(
+              selectedDay: _selectedDay!,
+              eventsAsync: eventsAsync,
+              onDeleteEvent: _deleteEvent,
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddEvent(_selectedDay!),
-        backgroundColor: Theme.of(context).primaryColor,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  // Navigate to add event screen
-  void _navigateToAddEvent(DateTime selectedDate) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SetScheduleScreen(selectedDate: selectedDate),
-      ),
-    );
-  }
-
-  // Navigate to edit event screen
-  void _navigateToEditEvent(Event event) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SetScheduleScreen(event: event),
+      floatingActionButton: AddEventFAB(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  SetScheduleScreen(selectedDate: _selectedDay!),
+            ),
+          );
+        },
       ),
     );
   }
 
   // Delete an event
   Future<void> _deleteEvent(String id) async {
-    final confirmed = await ConfirmationDialog.show(
+    final confirmed = await showDialog<bool>(
       context: context,
-      title: 'Delete Event',
-      content: 'Are you sure you want to delete this event?',
-      confirmText: 'Delete',
-      confirmColor: Colors.red,
+      builder: (context) => const ConfirmationDialog(
+        title: 'Delete Event',
+        content: 'Are you sure you want to delete this event?',
+        confirmText: 'Delete',
+        confirmColor: Colors.red,
+      ),
     );
 
     if (confirmed == true) {
       try {
         await ref.read(eventControllerProvider.notifier).deleteEvent(id);
-        if (!mounted) return;
-        CustomSnackbar.showSuccess(context, 'Event deleted successfully');
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } catch (e) {
-        if (!mounted) return;
-        CustomSnackbar.showError(context, 'Failed to delete event: $e');
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete event: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
 
   // Show logout dialog
   Future<void> _showLogoutDialog() async {
-    final confirmed = await ConfirmationDialog.show(
+    final confirmed = await showDialog<bool>(
       context: context,
-      title: 'Logout',
-      content: 'Are you sure you want to logout?',
-      confirmText: 'Logout',
+      builder: (context) => const ConfirmationDialog(
+        title: 'Logout',
+        content: 'Are you sure you want to logout?',
+        confirmText: 'Logout',
+        confirmColor: AppTheme.primaryColor,
+      ),
     );
 
     if (confirmed == true) {
       try {
         await ref.read(authControllerProvider.notifier).signOut();
       } catch (e) {
-        if (!mounted) return;
-        CustomSnackbar.showError(context, 'Failed to logout: $e');
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to logout: $e')),
+        );
       }
     }
   }

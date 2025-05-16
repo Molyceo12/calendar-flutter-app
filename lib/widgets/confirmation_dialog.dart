@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:calendar_app/theme/app_theme.dart';
 
+/// Confirmation dialog for various actions (delete, logout)
 class ConfirmationDialog extends StatelessWidget {
   final String title;
   final String content;
@@ -13,8 +13,8 @@ class ConfirmationDialog extends StatelessWidget {
     required this.title,
     required this.content,
     this.cancelText = 'Cancel',
-    this.confirmText = 'Confirm',
-    this.confirmColor = AppTheme.primaryColor,
+    required this.confirmText,
+    required this.confirmColor,
   });
 
   @override
@@ -22,6 +22,7 @@ class ConfirmationDialog extends StatelessWidget {
     return AlertDialog(
       title: Text(title),
       content: Text(content),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
@@ -29,33 +30,9 @@ class ConfirmationDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: Text(
-            confirmText,
-            style: TextStyle(color: confirmColor),
-          ),
+          child: Text(confirmText, style: TextStyle(color: confirmColor)),
         ),
       ],
-    );
-  }
-
-  // Helper method to show the dialog
-  static Future<bool?> show({
-    required BuildContext context,
-    required String title,
-    required String content,
-    String cancelText = 'Cancel',
-    String confirmText = 'Confirm',
-    Color confirmColor = AppTheme.primaryColor,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => ConfirmationDialog(
-        title: title,
-        content: content,
-        cancelText: cancelText,
-        confirmText: confirmText,
-        confirmColor: confirmColor,
-      ),
     );
   }
 }

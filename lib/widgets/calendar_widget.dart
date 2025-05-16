@@ -1,26 +1,28 @@
-import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/theme/app_theme.dart';
-import 'package:calendar_app/models/event.dart'; // Assuming you have an Event model
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:table_calendar/table_calendar.dart';
 
-class CustomCalendar extends StatelessWidget {
+/// A custom calendar widget that displays events with markers
+class CalendarWidget extends StatelessWidget {
+  final CalendarFormat calendarFormat;
   final DateTime focusedDay;
   final DateTime? selectedDay;
-  final CalendarFormat calendarFormat;
   final Function(DateTime, DateTime) onDaySelected;
   final Function(CalendarFormat) onFormatChanged;
   final Function(DateTime) onPageChanged;
-  final List<Event> events; // Assuming Event is your event model
+  final AsyncValue<List<Event>> eventsAsync;
 
-  const CustomCalendar({
+  const CalendarWidget({
     super.key,
+    required this.calendarFormat,
     required this.focusedDay,
     required this.selectedDay,
-    required this.calendarFormat,
     required this.onDaySelected,
     required this.onFormatChanged,
     required this.onPageChanged,
-    required this.events,
+    required this.eventsAsync,
   });
 
   @override
@@ -74,8 +76,11 @@ class CustomCalendar extends StatelessWidget {
         calendarBuilders: CalendarBuilders(
           markerBuilder: (context, day, events) {
             // Check if this day has events
-            final hasEvents =
-                this.events.any((event) => isSameDay(event.date, day));
+            final hasEvents = eventsAsync.maybeWhen(
+              data: (events) =>
+                  events.any((event) => isSameDay(event.date, day)),
+              orElse: () => false,
+            );
 
             if (hasEvents) {
               return Positioned(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:calendar_app/widgets/custom_form_field.dart';
-import 'package:calendar_app/widgets/custom_button.dart';
-import 'package:calendar_app/widgets/auth_toggle.dart';
+
+import 'auth_toggle.dart';
+import 'custom_button.dart';
+import 'custom_form_field.dart';
 
 class AuthForm extends StatefulWidget {
   final Future<void> Function(String email, String password) onSubmit;

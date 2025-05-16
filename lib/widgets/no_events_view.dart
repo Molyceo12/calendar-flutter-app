@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:calendar_app/screens/set_schedule_screen.dart';
 import 'package:calendar_app/theme/app_theme.dart';
+import 'package:flutter/material.dart';
 
-class EmptyEventsView extends StatelessWidget {
-  final VoidCallback onAddEvent;
+/// Widget shown when there are no events for the selected day
+class NoEventsView extends StatelessWidget {
+  final DateTime selectedDate;
 
-  const EmptyEventsView({
+  const NoEventsView({
     super.key,
-    required this.onAddEvent,
+    required this.selectedDate,
   });
 
   @override
@@ -30,7 +32,15 @@ class EmptyEventsView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: onAddEvent,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      SetScheduleScreen(selectedDate: selectedDate),
+                ),
+              );
+            },
             icon: const Icon(Icons.add),
             label: const Text('Add Event'),
             style: ElevatedButton.styleFrom(
