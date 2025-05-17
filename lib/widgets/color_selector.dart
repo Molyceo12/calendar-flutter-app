@@ -31,7 +31,7 @@ class ColorSelector extends StatelessWidget {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: Color(int.parse(color['value']!.substring(1), radix: 16) + 0xFF000000).withOpacity(0.5),
+                        color: Color(int.parse(color['value']!.substring(1), radix: 16) + 0xFF000000).withValues(alpha: 0.5),
                         blurRadius: 6,
                         offset: const Offset(0, 3),
                       ),

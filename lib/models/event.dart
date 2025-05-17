@@ -65,4 +65,27 @@ class Event {
       userId: map['user_id'],
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Event &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          title == other.title &&
+          description == other.description &&
+          date == other.date &&
+          color == other.color &&
+          hasNotification == other.hasNotification &&
+          userId == other.userId;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      title.hashCode ^
+      description.hashCode ^
+      date.hashCode ^
+      color.hashCode ^
+      hasNotification.hashCode ^
+      userId.hashCode;
 }

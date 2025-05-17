@@ -6,8 +6,8 @@ import 'package:calendar_app/widgets/add_event_fab.dart';
 import 'package:calendar_app/widgets/calendar_app_bar.dart';
 import 'package:calendar_app/widgets/calendar_widget.dart';
 import 'package:calendar_app/widgets/confirmation_dialog.dart';
+import 'package:calendar_app/widgets/date_header.dart';
 import 'package:calendar_app/widgets/events_list.dart';
-import 'package:calendar_app/widgets/selected_date_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -66,7 +66,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           // Selected day header
-          SelectedDateHeader(selectedDay: _selectedDay!),
+          DateHeader(selectedDay: _selectedDay!),
 
           const Divider(),
 

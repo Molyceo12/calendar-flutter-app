@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:calendar_app/models/event.dart';
@@ -56,65 +57,85 @@ class DatabaseService {
 
   // Get events for a specific month and user
   Future<List<Event>> getEventsForMonth(DateTime month, String userId) async {
-    final db = await database;
-
-    // First day of month
-    final firstDay = DateTime(month.year, month.month, 1);
-    // Last day of month
-    final lastDay = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
-
-    final List<Map<String, dynamic>> maps = await db.query(
-      tableEvents,
-      where: 'date BETWEEN ? AND ? AND user_id = ?',
-      whereArgs: [
-        firstDay.millisecondsSinceEpoch,
-        lastDay.millisecondsSinceEpoch,
-        userId,
-      ],
-    );
-
-    return List.generate(maps.length, (i) => Event.fromMap(maps[i]));
+    try {
+      final db = await database;
+      final firstDay = DateTime(month.year, month.month, 1);
+      final lastDay = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+      final List<Map<String, dynamic>> maps = await db.query(
+        tableEvents,
+        where: 'date BETWEEN ? AND ? AND user_id = ?',
+        whereArgs: [
+          firstDay.millisecondsSinceEpoch,
+          lastDay.millisecondsSinceEpoch,
+          userId,
+        ],
+      );
+      return List.generate(maps.length, (i) => Event.fromMap(maps[i]));
+    } catch (e) {
+      debugPrint('Error in getEventsForMonth: \$e\n\$stack');
+      rethrow;
+    }
   }
 
   // Insert event
   Future<void> insertEvent(Event event) async {
-    final db = await database;
-    await db.insert(
-      tableEvents,
-      event.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    try {
+      final db = await database;
+      await db.insert(
+        tableEvents,
+        event.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      debugPrint('Error in insertEvent: \$e\n\$stack');
+      rethrow;
+    }
   }
 
   // Update event
   Future<void> updateEvent(Event event) async {
-    final db = await database;
-    await db.update(
-      tableEvents,
-      event.toMap(),
-      where: 'id = ?',
-      whereArgs: [event.id],
-    );
+    try {
+      final db = await database;
+      await db.update(
+        tableEvents,
+        event.toMap(),
+        where: 'id = ?',
+        whereArgs: [event.id],
+      );
+    } catch (e) {
+      debugPrint('Error in updateEvent: \$e\n\$stack');
+      rethrow;
+    }
   }
 
   // Delete event
   Future<void> deleteEvent(String id) async {
-    final db = await database;
-    await db.delete(
-      tableEvents,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    try {
+      final db = await database;
+      await db.delete(
+        tableEvents,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      debugPrint('Error in deleteEvent: \$e\n\$stack');
+      rethrow;
+    }
   }
 
   // Get all events for a user
   Future<List<Event>> getEventsForUser(String userId) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      tableEvents,
-      where: 'user_id = ?',
-      whereArgs: [userId],
-    );
-    return List.generate(maps.length, (i) => Event.fromMap(maps[i]));
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> maps = await db.query(
+        tableEvents,
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+      return List.generate(maps.length, (i) => Event.fromMap(maps[i]));
+    } catch (e) {
+      debugPrint('Error in getEventsForUser: \$e\n\$stack');
+      rethrow;
+    }
   }
 }

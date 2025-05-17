@@ -13,14 +13,7 @@ class AppTheme {
   static const Color textSecondaryColor = Color(0xFF64748B);
   static const Color textTertiaryColor = Color(0xFF94A3B8);
 
-  static const Map<String, Color> categoryColors = {
-    "Meeting": Color(0xFFFFA000),
-    "Hangout": Color(0xFF9C27B0),
-    "Cooking": Color(0xFFE53935),
-    "Other": Color(0xFF616161),
-    "Weekend": Color(0xFF2E7D32),
-  };
-
+  // Removed categoryColors map (now in color_utils.dart)
   // Dark Theme Colors
   static const Color darkPrimaryColor = Color(0xFFEC4899);
   static const Color darkSecondaryColor = Color(0xFF8B5CF6);

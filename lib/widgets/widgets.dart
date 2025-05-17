@@ -5,6 +5,5 @@ export 'confirmation_dialog.dart';
 export 'event_card.dart';
 export 'events_list.dart';
 export 'no_events_view.dart';
-export 'selected_date_header.dart';
 export 'auth_form.dart';
 export 'decorative_background.dart';

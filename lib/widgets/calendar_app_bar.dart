@@ -1,5 +1,5 @@
+import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-
 /// Widget to display a custom app bar with transparent background
 class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -17,7 +17,7 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFF1E293B), // AppTheme.textPrimaryColor
+          color: AppTheme.textPrimaryColor,
         ),
       ),
       backgroundColor: Colors.transparent,
@@ -26,7 +26,7 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(
             Icons.logout,
-            color: Color(0xFF1E293B), // AppTheme.textPrimaryColor
+            color: AppTheme.textPrimaryColor,
           ),
           onPressed: () => onLogoutPressed(),
         ),
