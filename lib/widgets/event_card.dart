@@ -6,18 +6,21 @@ class EventCard extends StatelessWidget {
   final Event event;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onNotifyToggle;
 
   const EventCard({
     super.key,
     required this.event,
     required this.onEdit,
     required this.onDelete,
+    this.onNotifyToggle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -88,8 +91,22 @@ class EventCard extends StatelessWidget {
               onPressed: onEdit,
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: Icon(Icons.delete, color: colorScheme.error),
               onPressed: onDelete,
+            ),
+            IconButton(
+              icon: Icon(
+                event.hasNotification
+                    ? Icons.notifications_active
+                    : Icons.notifications_none,
+                color: event.hasNotification
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              onPressed: onNotifyToggle,
+              tooltip: event.hasNotification
+                  ? 'Disable Notification'
+                  : 'Enable Notification',
             ),
           ],
         ),

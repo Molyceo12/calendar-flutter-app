@@ -5,6 +5,7 @@ import 'package:calendar_app/widgets/no_events_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:calendar_app/providers/event_provider.dart';
 
 /// Widget to display the list of events for a selected day
 class EventsList extends ConsumerWidget {
@@ -21,6 +22,11 @@ class EventsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    void toggleNotification(Event event) {
+      final updatedEvent = event.copyWith(hasNotification: !event.hasNotification);
+      ref.read(eventControllerProvider.notifier).updateEvent(updatedEvent);
+    }
+
     return eventsAsync.when(
       data: (events) {
         final dayEvents = events
@@ -47,6 +53,7 @@ class EventsList extends ConsumerWidget {
                   ),
                 );
               },
+              onNotifyToggle: () => toggleNotification(event),
             );
           },
         );

@@ -213,7 +213,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: Text(
           widget.event != null ? 'Edit Event' : 'Add Event',
@@ -377,56 +377,74 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                                 ? [
                                     BoxShadow(
                                       color: Color(int.parse(
-                                              color['value']!.substring(1),
-                                              radix: 16) +
-                                          0x33000000),
-                                      blurRadius: 8,
-                                      spreadRadius: 2,
+                                                  color['value']!.substring(1),
+                                                  radix: 16) +
+                                              0xFF000000)
+                                          .withValues(alpha: 0.5),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
                                     ),
                                   ]
-                                : null,
+                                : [],
                           ),
-                          child: isSelected
-                              ? const Icon(Icons.check, color: Colors.white)
-                              : null,
                         ),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 24),
 
-                  // Notification switch
-                  SwitchListTile(
-                    title: const Text(
-                      'Reminder Notification',
-                      style: AppTheme.bodyLarge,
-                    ),
-                    subtitle: const Text(
-                      '30 minutes before event',
-                      style: AppTheme.bodySmall,
-                    ),
-                    value: _hasNotification,
-                    activeColor: AppTheme.primaryColor,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    onChanged: (value) {
-                      setState(() {
-                        _hasNotification = value;
-                      });
-                    },
+                  // Notification toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Enable Notification",
+                        style: AppTheme.headingSmall,
+                      ),
+                      Switch(
+                        activeColor: AppTheme.primaryColor,
+                        value: _hasNotification,
+                        onChanged: (value) {
+                          setState(() {
+                            _hasNotification = value;
+                          });
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 32),
 
-                  // Save button
+                  // Submit button
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _saveEvent,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(widget.event != null
-                              ? 'Update Event'
-                              : 'Save Event'),
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : Text(
+                              widget.event != null
+                                  ? 'Update Event'
+                                  : 'Add Event',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ],
