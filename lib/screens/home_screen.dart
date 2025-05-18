@@ -1,6 +1,7 @@
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/screens/set_schedule_screen.dart';
+import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/widgets/add_event_fab.dart';
 import 'package:calendar_app/widgets/calendar_app_bar.dart';
 import 'package:calendar_app/widgets/calendar_widget.dart';
@@ -40,49 +41,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: 'Calendar',
         onLogoutPressed: _showLogoutDialog,
       ),
-      body: Column(
-        children: [
-          CalendarWidget(
-            calendarFormat: _calendarFormat,
-            focusedDay: _focusedDay,
-            selectedDay: _selectedDay,
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            CalendarWidget(
+              calendarFormat: _calendarFormat,
+              focusedDay: _focusedDay,
+              selectedDay: _selectedDay,
+              onDaySelected: (selectedDay, focusedDay) {
+                setState(() {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                });
+              },
+              onFormatChanged: (format) {
+                setState(() {
+                  _calendarFormat = format;
+                });
+              },
+              onPageChanged: (focusedDay) {
                 _focusedDay = focusedDay;
-              });
-            },
-            onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-            },
-            eventsAsync: eventsAsync,
-          ),
-          DateHeader(selectedDay: _selectedDay!),
-          const Divider(),
-          Expanded(
-            child: EventsList(
-              selectedDay: _selectedDay!,
+              },
               eventsAsync: eventsAsync,
-              onDeleteEvent: _deleteEvent,
             ),
+            DateHeader(selectedDay: _selectedDay!),
+            const Divider(),
+            SizedBox(
+              height: 400, // Set a fixed height or adjust as needed
+              child: EventsList(
+                selectedDay: _selectedDay!,
+                eventsAsync: eventsAsync,
+                onDeleteEvent: _deleteEvent,
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AddEventFAB(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      SetScheduleScreen(selectedDate: _selectedDay!),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'testNotification',
+            onPressed: () async {
+              await NotificationService().showTestNotification();
+            },
+            tooltip: 'Show Test Notification',
+            child: const Icon(Icons.notifications_active),
           ),
         ],
-      ),
-      floatingActionButton: AddEventFAB(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  SetScheduleScreen(selectedDate: _selectedDay!),
-            ),
-          );
-        },
       ),
     );
   }

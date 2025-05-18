@@ -46,6 +46,7 @@ class _NotificationToggleState extends State<NotificationToggle> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -54,7 +55,9 @@ class _NotificationToggleState extends State<NotificationToggle> {
           style: theme.textTheme.bodyMedium,
         ),
         Switch(
-          activeColor: theme.primaryColor,
+          activeColor: colorScheme.primary,
+          inactiveThumbColor: colorScheme.onSurface.withValues(alpha: 0.6),
+          inactiveTrackColor: colorScheme.onSurface.withValues(alpha: 0.3),
           value: _toggleValue,
           onChanged: _handleToggle,
         ),

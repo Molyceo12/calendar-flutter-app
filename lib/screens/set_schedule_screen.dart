@@ -1,7 +1,7 @@
 import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
-import 'package:calendar_app/theme/app_theme.dart';
+import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/widgets/color_selector.dart';
 import 'package:calendar_app/widgets/custom_button.dart';
 import 'package:calendar_app/widgets/date_time_picker_card.dart';
@@ -78,13 +78,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
       lastDate: DateTime(2030),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.textPrimaryColor,
-            ),
-          ),
+          data: Theme.of(context), 
           child: child!,
         );
       },
@@ -110,13 +104,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
       initialTime: TimeOfDay.fromDateTime(_selectedDate),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.textPrimaryColor,
-            ),
-          ),
+          data: Theme.of(context), // Use the current theme
           child: child!,
         );
       },
@@ -165,6 +153,13 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
             .read(eventControllerProvider.notifier)
             .updateEvent(updatedEvent);
 
+        // Schedule or cancel notification based on hasNotification
+        if (_hasNotification) {
+          await NotificationService().scheduleEventNotification(updatedEvent);
+        } else {
+          await NotificationService().cancelEventNotification(updatedEvent);
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -186,6 +181,13 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
         );
 
         await ref.read(eventControllerProvider.notifier).createEvent(newEvent);
+
+        // Schedule or cancel notification based on hasNotification
+        if (_hasNotification) {
+          await NotificationService().scheduleEventNotification(newEvent);
+        } else {
+          await NotificationService().cancelEventNotification(newEvent);
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

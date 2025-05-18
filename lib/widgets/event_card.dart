@@ -29,7 +29,7 @@ class EventCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: const EdgeInsets.all(8),
         leading: Container(
           width: 12,
           height: double.infinity,
