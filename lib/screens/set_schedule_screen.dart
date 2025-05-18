@@ -2,10 +2,15 @@ import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/theme/app_theme.dart';
+import 'package:calendar_app/widgets/color_selector.dart';
+import 'package:calendar_app/widgets/custom_button.dart';
+import 'package:calendar_app/widgets/date_time_picker_card.dart';
 import 'package:calendar_app/widgets/decorative_background.dart';
+import 'package:calendar_app/widgets/notification_toggle.dart';
+import 'package:calendar_app/widgets/section_header.dart';
+import 'package:calendar_app/widgets/styled_text_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 class SetScheduleScreen extends ConsumerStatefulWidget {
   final DateTime? selectedDate;
@@ -26,7 +31,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late DateTime _selectedDate;
-  String _selectedColor = '#EC4899'; // Default to primary color
+  String _selectedColor = '#EC4899'; 
   bool _hasNotification = false;
   bool _isLoading = false;
 
@@ -247,205 +252,66 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                   const SizedBox(height: 32),
 
                   // Title field
-                  const Text(
-                    "Event Title",
-                    style: AppTheme.headingSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter event title...",
-                        hintStyle: TextStyle(color: AppTheme.textTertiaryColor),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a title';
-                        }
-                        return null;
-                      },
-                    ),
+                  const SectionHeader(title: "Event Title"),
+                  StyledTextFormField(
+                    controller: _titleController,
+                    hintText: "Enter event title...",
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a title';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 24),
 
                   // Date and time
-                  const Text(
-                    "Date & Time",
-                    style: AppTheme.headingSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    elevation: 0,
-                    color: AppTheme.surfaceColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.calendar_today,
-                                color: AppTheme.primaryColor),
-                            title: Text(
-                              DateFormat('EEEE, MMMM d, yyyy')
-                                  .format(_selectedDate),
-                              style: AppTheme.bodyMedium,
-                            ),
-                            trailing:
-                                const Icon(Icons.arrow_forward_ios, size: 16),
-                            onTap: () => _selectDate(context),
-                          ),
-                          const Divider(),
-                          ListTile(
-                            leading: const Icon(Icons.access_time,
-                                color: AppTheme.primaryColor),
-                            title: Text(
-                              DateFormat('h:mm a').format(_selectedDate),
-                              style: AppTheme.bodyMedium,
-                            ),
-                            trailing:
-                                const Icon(Icons.arrow_forward_ios, size: 16),
-                            onTap: () => _selectTime(context),
-                          ),
-                        ],
-                      ),
-                    ),
+                  const SectionHeader(title: "Date & Time"),
+                  DateTimePickerCard(
+                    selectedDate: _selectedDate,
+                    selectDate: _selectDate,
+                    selectTime: _selectTime,
                   ),
                   const SizedBox(height: 24),
 
                   // Description field
-                  const Text(
-                    "Description",
-                    style: AppTheme.headingSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Add description here...",
-                        hintStyle: TextStyle(color: AppTheme.textTertiaryColor),
-                      ),
-                      maxLines: 3,
-                    ),
+                  const SectionHeader(title: "Description"),
+                  StyledTextFormField(
+                    controller: _descriptionController,
+                    hintText: "Add description here...",
+                    maxLines: 3,
                   ),
                   const SizedBox(height: 24),
 
                   // Color selection
-                  const Text(
-                    "Color",
-                    style: AppTheme.headingSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: _colorOptions.map((color) {
-                      final isSelected = _selectedColor == color['value'];
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedColor = color['value']!;
-                          });
-                        },
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Color(int.parse(color['value']!.substring(1),
-                                    radix: 16) +
-                                0xFF000000),
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: Colors.white, width: 3)
-                                : null,
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: Color(int.parse(
-                                                  color['value']!.substring(1),
-                                                  radix: 16) +
-                                              0xFF000000)
-                                          .withValues(alpha: 0.5),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                  const SectionHeader(title: "Color"),
+                  ColorSelector(
+                    selectedColor: _selectedColor,
+                    colorOptions: _colorOptions,
+                    onColorSelected: (color) {
+                      setState(() {
+                        _selectedColor = color;
+                      });
+                    },
                   ),
                   const SizedBox(height: 24),
 
                   // Notification toggle
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Enable Notification",
-                        style: AppTheme.headingSmall,
-                      ),
-                      Switch(
-                        activeColor: AppTheme.primaryColor,
-                        value: _hasNotification,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasNotification = value;
-                          });
-                        },
-                      ),
-                    ],
+                  NotificationToggle(
+                    value: _hasNotification,
+                    onChanged: (value) {
+                      setState(() {
+                        _hasNotification = value;
+                      });
+                    },
                   ),
                   const SizedBox(height: 32),
 
                   // Submit button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _saveEvent,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                            )
-                          : Text(
-                              widget.event != null
-                                  ? 'Update Event'
-                                  : 'Add Event',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
+                  CustomButton(
+                    text: widget.event != null ? 'Update Event' : 'Add Event',
+                    onPressed: _saveEvent,
+                    isLoading: _isLoading,
                   ),
                 ],
               ),

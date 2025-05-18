@@ -1,4 +1,3 @@
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// A custom floating action button with app theme styling
@@ -12,14 +11,19 @@ class AddEventFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return FloatingActionButton(
       onPressed: onPressed,
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: theme.colorScheme.primary,
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Icon(Icons.add),
+      child: Icon(
+        Icons.add,
+        color: theme.colorScheme.onPrimary,
+      ),
     );
   }
 }

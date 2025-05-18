@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 class DateTimeSelectorCard extends StatelessWidget {
@@ -16,9 +15,11 @@ class DateTimeSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       elevation: 0,
-      color: AppTheme.surfaceColor,
+      color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -27,20 +28,22 @@ class DateTimeSelectorCard extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
-              leading: const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+              leading:
+                  Icon(Icons.calendar_today, color: theme.colorScheme.primary),
               title: Text(
                 DateFormat('EEEE, MMMM d, yyyy').format(selectedDate),
-                style: AppTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium,
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: onSelectDate,
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.access_time, color: AppTheme.primaryColor),
+              leading:
+                  Icon(Icons.access_time, color: theme.colorScheme.primary),
               title: Text(
                 DateFormat('h:mm a').format(selectedDate),
-                style: AppTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium,
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: onSelectTime,

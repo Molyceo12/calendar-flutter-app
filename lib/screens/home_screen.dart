@@ -1,7 +1,6 @@
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/screens/set_schedule_screen.dart';
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/widgets/add_event_fab.dart';
 import 'package:calendar_app/widgets/calendar_app_bar.dart';
 import 'package:calendar_app/widgets/calendar_widget.dart';
@@ -32,18 +31,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get events for the current month
     final eventsAsync = ref.watch(eventsForMonthProvider(_focusedDay));
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       appBar: CalendarAppBar(
         title: 'Calendar',
         onLogoutPressed: _showLogoutDialog,
       ),
       body: Column(
         children: [
-          // Calendar widget
           CalendarWidget(
             calendarFormat: _calendarFormat,
             focusedDay: _focusedDay,
@@ -64,13 +62,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
             eventsAsync: eventsAsync,
           ),
-
-          // Selected day header
           DateHeader(selectedDay: _selectedDay!),
-
           const Divider(),
-
-          // Events list for selected day
           Expanded(
             child: EventsList(
               selectedDay: _selectedDay!,
@@ -94,53 +87,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Delete an event
   Future<void> _deleteEvent(String id) async {
+    final theme = Theme.of(context);
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => const ConfirmationDialog(
+      builder: (context) => ConfirmationDialog(
         title: 'Delete Event',
         content: 'Are you sure you want to delete this event?',
         confirmText: 'Delete',
-        confirmColor: Colors.red,
+        confirmColor: theme.colorScheme.primary,
       ),
     );
 
     if (confirmed == true) {
       try {
         await ref.read(eventControllerProvider.notifier).deleteEvent(id);
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event deleted successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Event deleted successfully'),
+            backgroundColor: theme.colorScheme.primary,
           ),
         );
       } catch (e) {
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete event: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: theme.colorScheme.error,
           ),
         );
       }
     }
   }
 
-  // Show logout dialog
   Future<void> _showLogoutDialog() async {
+    final theme = Theme.of(context);
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => const ConfirmationDialog(
+      builder: (context) => ConfirmationDialog(
         title: 'Logout',
         content: 'Are you sure you want to logout?',
         confirmText: 'Logout',
-        confirmColor: AppTheme.primaryColor,
+        confirmColor: theme.colorScheme.primary,
       ),
     );
 
@@ -148,11 +141,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       try {
         await ref.read(authControllerProvider.notifier).signOut();
       } catch (e) {
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to logout: $e')),
+          SnackBar(
+            content: Text('Failed to logout: $e'),
+            backgroundColor: theme.colorScheme.error,
+          ),
         );
       }
     }

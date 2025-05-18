@@ -13,6 +13,7 @@ class NoEventsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +24,7 @@ class NoEventsView extends StatelessWidget {
             color: Colors.grey.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No events for this day',
             style: TextStyle(
               fontSize: 18,
@@ -44,7 +45,7 @@ class NoEventsView extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Add Event'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
+              backgroundColor: theme.primaryColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
