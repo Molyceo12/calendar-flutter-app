@@ -22,6 +22,10 @@ class EventsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     void toggleNotification(Event event) {
       final updatedEvent = event.copyWith(hasNotification: !event.hasNotification);
       ref.read(eventControllerProvider.notifier).updateEvent(updatedEvent);
@@ -60,7 +64,10 @@ class EventsList extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
-        child: Text('Error loading events: $error'),
+        child: Text(
+          'Error loading events: $error',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.error),
+        ),
       ),
     );
   }

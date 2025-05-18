@@ -1,4 +1,3 @@
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 /// Widget to display a custom app bar with transparent background
 class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {

@@ -1,4 +1,3 @@
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class SectionHeader extends StatelessWidget {
@@ -11,12 +10,14 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: AppTheme.headingSmall,
+          style: textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
       ],

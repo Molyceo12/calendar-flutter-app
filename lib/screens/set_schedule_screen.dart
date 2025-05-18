@@ -31,7 +31,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late DateTime _selectedDate;
-  String _selectedColor = '#EC4899'; 
+  String _selectedColor = '#EC4899';
   bool _hasNotification = false;
   bool _isLoading = false;
 
@@ -251,10 +251,9 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     widget.event != null
                         ? "Update your\nschedule"
                         : "Let's set the\nschedule easily",
-                    style: textTheme.headlineLarge?.copyWith(color: colorScheme.onSurface),
+                    style: textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 32),
-
                   // Title field
                   const SectionHeader(title: "Event Title"),
                   StyledTextFormField(
@@ -303,6 +302,15 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                   // Notification toggle
                   NotificationToggle(
                     value: _hasNotification,
+                    event: widget.event ??
+                        Event(
+                          title: '',
+                          description: '',
+                          date: DateTime.now(),
+                          color: '',
+                          hasNotification: false,
+                          userId: '',
+                        ),
                     onChanged: (value) {
                       setState(() {
                         _hasNotification = value;

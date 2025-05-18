@@ -1,4 +1,3 @@
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:calendar_app/widgets/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -17,9 +16,10 @@ class DateTimePickerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: AppTheme.surfaceColor,
+      color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),

@@ -1,4 +1,3 @@
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class DateTimeTile extends StatelessWidget {
@@ -15,10 +14,11 @@ class DateTimeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
-      leading: Icon(icon, color: AppTheme.primaryColor),
-      title: Text(text, style: AppTheme.bodyMedium),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      leading: Icon(icon),
+      title: Text(text, style: theme.textTheme.bodyMedium),
+      trailing: Icon(Icons.arrow_forward_ios ,size: 16),
       onTap: onTap,
     );
   }

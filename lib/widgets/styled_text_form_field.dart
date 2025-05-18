@@ -1,4 +1,3 @@
-import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class StyledTextFormField extends StatelessWidget {
@@ -17,22 +16,15 @@ class StyledTextFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(16),
+    final theme = Theme.of(context);
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: theme.textTheme.bodySmall,
       ),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: hintText,
-          hintStyle: AppTheme.bodySmall,
-        ),
-        maxLines: maxLines,
-        validator: validator,
-      ),
-    );
+      maxLines: maxLines,
+      validator: validator,
+      );
   }
 }
