@@ -21,15 +21,12 @@ class NoEventsView extends StatelessWidget {
           Icon(
             Icons.event_note,
             size: 80,
-            color: Colors.grey.withValues(alpha: 0.5),
+            color: AppTheme.textTertiaryColor.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No events for this day',
-            style: TextStyle(
-              fontSize: 18,
-              color: AppTheme.textSecondaryColor,
-            ),
+            style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondaryColor),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -45,8 +42,8 @@ class NoEventsView extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Add Event'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: theme.primaryColor,
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: AppTheme.backgroundColor,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class AuthToggle extends StatelessWidget {
@@ -25,10 +26,8 @@ class AuthToggle extends StatelessWidget {
           onPressed: onToggle,
           child: Text(
             isLogin ? "Sign Up" : "Login",
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTheme.headingSmall
+                .copyWith(color: theme.colorScheme.primary),
           ),
         ),
       ],

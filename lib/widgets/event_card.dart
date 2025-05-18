@@ -1,3 +1,4 @@
+import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:calendar_app/models/event.dart';
 import 'package:intl/intl.dart';
@@ -44,7 +45,7 @@ class EventCard extends StatelessWidget {
         ),
         title: Text(
           event.title,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTheme.headingSmall,
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,14 +63,12 @@ class EventCard extends StatelessWidget {
                 Icon(
                   Icons.access_time,
                   size: 16,
-                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colorScheme.onSurface.withOpacity(0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('h:mm a').format(event.date),
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
+                  style: AppTheme.bodySmall.copyWith(color: colorScheme.onSurface.withOpacity(0.6)),
                 ),
                 if (event.hasNotification) ...[
                   const SizedBox(width: 12),

@@ -16,15 +16,13 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(
         title,
-        style: const TextStyle(
-          color: AppTheme.textPrimaryColor,
-        ),
+        style: AppTheme.headingSmall,
       ),
       backgroundColor: Colors.transparent,
       elevation: 0,
       actions: [
         IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.logout,
             color: AppTheme.textPrimaryColor,
           ),

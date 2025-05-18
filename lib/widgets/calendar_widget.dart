@@ -82,7 +82,6 @@ class CalendarWidget extends StatelessWidget {
           ),
         ),
         daysOfWeekStyle: DaysOfWeekStyle(
-          
           weekdayStyle: TextStyle(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,

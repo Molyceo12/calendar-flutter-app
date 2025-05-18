@@ -1,3 +1,4 @@
+import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Confirmation dialog for various actions (delete, logout)
@@ -30,7 +31,8 @@ class ConfirmationDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: Text(confirmText, style: TextStyle(color: confirmColor)),
+          child: Text(confirmText,
+              style: AppTheme.bodyMedium.copyWith(color: confirmColor)),
         ),
       ],
     );

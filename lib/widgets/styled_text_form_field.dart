@@ -28,7 +28,7 @@ class StyledTextFormField extends StatelessWidget {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
-          hintStyle: const TextStyle(color: AppTheme.textTertiaryColor),
+          hintStyle: AppTheme.bodySmall,
         ),
         maxLines: maxLines,
         validator: validator,

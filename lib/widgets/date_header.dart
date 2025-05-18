@@ -1,3 +1,4 @@
+import 'package:calendar_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -25,17 +26,14 @@ class DateHeader extends StatelessWidget {
             ),
             child: const Icon(
               Icons.calendar_today,
-              color: Colors.white,
+              color: AppTheme.backgroundColor,
               size: 20,
             ),
           ),
           const SizedBox(width: 12),
           Text(
             DateFormat('EEEE, MMMM d, yyyy').format(selectedDay),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
+            style: AppTheme.headingSmall.copyWith(color: theme.colorScheme.onSurface),
           ),
         ],
       ),

@@ -31,17 +31,13 @@ class LoadingButton extends StatelessWidget {
                 height: 24,
                 width: 24,
                 child: CircularProgressIndicator(
-                  color: Colors.white,
+                  color: AppTheme.backgroundColor,
                   strokeWidth: 3,
                 ),
               )
             : Text(
                 text,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
+                style: AppTheme.headingSmall.copyWith(color: AppTheme.backgroundColor),
               ),
       ),
     );
