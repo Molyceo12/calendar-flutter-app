@@ -217,17 +217,21 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           widget.event != null ? 'Edit Event' : 'Add Event',
-          style: const TextStyle(color: AppTheme.textPrimaryColor),
+          style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -247,7 +251,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     widget.event != null
                         ? "Update your\nschedule"
                         : "Let's set the\nschedule easily",
-                    style: AppTheme.headingLarge,
+                    style: textTheme.headlineLarge?.copyWith(color: colorScheme.onSurface),
                   ),
                   const SizedBox(height: 32),
 

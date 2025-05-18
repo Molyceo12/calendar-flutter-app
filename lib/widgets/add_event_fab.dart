@@ -12,8 +12,6 @@ class AddEventFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return FloatingActionButton(
       onPressed: onPressed,
       backgroundColor: AppTheme.primaryColor,

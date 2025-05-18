@@ -13,7 +13,6 @@ class NoEventsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -21,12 +20,13 @@ class NoEventsView extends StatelessWidget {
           Icon(
             Icons.event_note,
             size: 80,
-            color: AppTheme.textTertiaryColor.withOpacity(0.5),
+            color: AppTheme.textTertiaryColor.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No events for this day',
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondaryColor),
+            style: AppTheme.bodyMedium
+                .copyWith(color: AppTheme.textSecondaryColor),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(

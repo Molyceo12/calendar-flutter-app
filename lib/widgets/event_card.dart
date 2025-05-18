@@ -63,12 +63,13 @@ class EventCard extends StatelessWidget {
                 Icon(
                   Icons.access_time,
                   size: 16,
-                  color: colorScheme.onSurface.withOpacity(0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('h:mm a').format(event.date),
-                  style: AppTheme.bodySmall.copyWith(color: colorScheme.onSurface.withOpacity(0.6)),
+                  style: AppTheme.bodySmall.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 if (event.hasNotification) ...[
                   const SizedBox(width: 12),

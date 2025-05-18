@@ -13,10 +13,13 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AppBar(
       title: Text(
         title,
-        style: AppTheme.headingSmall,
+        style: theme.textTheme.titleLarge?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
       ),
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -24,7 +27,7 @@ class CalendarAppBar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: Icon(
             Icons.logout,
-            color: AppTheme.textPrimaryColor,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => onLogoutPressed(),
         ),
