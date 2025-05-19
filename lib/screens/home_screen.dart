@@ -1,7 +1,6 @@
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
 import 'package:calendar_app/screens/set_schedule_screen.dart';
-import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/widgets/add_event_fab.dart';
 import 'package:calendar_app/widgets/calendar_app_bar.dart';
 import 'package:calendar_app/widgets/calendar_widget.dart';
@@ -92,14 +91,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
           const SizedBox(height: 12),
-          FloatingActionButton(
-            heroTag: 'testNotification',
-            onPressed: () async {
-              await NotificationService().showTestNotification();
-            },
-            tooltip: 'Show Test Notification',
-            child: const Icon(Icons.notifications_active),
-          ),
+          // Removed test notification FloatingActionButton as showTestNotification no longer exists
+          // You can implement FCM notification trigger here if needed
         ],
       ),
     );

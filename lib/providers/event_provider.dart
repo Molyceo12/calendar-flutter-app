@@ -3,6 +3,7 @@ import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/services/database_service.dart';
 import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Database service provider
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
@@ -40,6 +41,7 @@ class EventController extends StateNotifier<AsyncValue<void>> {
   final DatabaseService _dbService;
   final NotificationService _notificationService;
   final Ref _ref;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   EventController(this._dbService, this._notificationService, this._ref)
       : super(const AsyncValue.data(null));
@@ -50,6 +52,17 @@ class EventController extends StateNotifier<AsyncValue<void>> {
     try {
       // Save to SQLite
       await _dbService.insertEvent(event);
+
+      // Save to Firestore
+      final userId = _ref.read(userIdProvider);
+      if (userId != null) {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('events')
+            .doc(event.id)
+            .set(event.toMap());
+      }
 
       // Schedule notification if needed
       if (event.hasNotification) {
@@ -72,6 +85,17 @@ class EventController extends StateNotifier<AsyncValue<void>> {
     try {
       // Update in SQLite
       await _dbService.updateEvent(event);
+
+      // Update in Firestore
+      final userId = _ref.read(userIdProvider);
+      if (userId != null) {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('events')
+            .doc(event.id)
+            .update(event.toMap());
+      }
 
       // Cancel existing notification and schedule a new one if needed
       await _notificationService.cancelEventNotification(event);
@@ -108,6 +132,14 @@ class EventController extends StateNotifier<AsyncValue<void>> {
 
       // Delete from SQLite
       await _dbService.deleteEvent(id);
+
+      // Delete from Firestore
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('events')
+          .doc(id)
+          .delete();
 
       // Refresh events list
       _ref.invalidate(eventsForMonthProvider);
