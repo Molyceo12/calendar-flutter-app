@@ -56,12 +56,13 @@ class EventController extends StateNotifier<AsyncValue<void>> {
       // Save to Firestore
       final userId = _ref.read(userIdProvider);
       if (userId != null) {
+        final eventMap = event.toMap();
+        eventMap['date'] = Timestamp.fromDate(event.date);
+        eventMap['userId'] = userId;
         await _firestore
-            .collection('users')
-            .doc(userId)
             .collection('events')
             .doc(event.id)
-            .set(event.toMap());
+            .set(eventMap);
       }
 
       // Schedule notification if needed
@@ -89,12 +90,13 @@ class EventController extends StateNotifier<AsyncValue<void>> {
       // Update in Firestore
       final userId = _ref.read(userIdProvider);
       if (userId != null) {
+        final eventMap = event.toMap();
+        eventMap['date'] = Timestamp.fromDate(event.date);
+        eventMap['userId'] = userId;
         await _firestore
-            .collection('users')
-            .doc(userId)
             .collection('events')
             .doc(event.id)
-            .update(event.toMap());
+            .update(eventMap);
       }
 
       // Cancel existing notification and schedule a new one if needed
@@ -135,8 +137,6 @@ class EventController extends StateNotifier<AsyncValue<void>> {
 
       // Delete from Firestore
       await _firestore
-          .collection('users')
-          .doc(userId)
           .collection('events')
           .doc(id)
           .delete();

@@ -1,3 +1,11 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:calendar_app/firebase_options.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/theme_provider.dart';
@@ -6,12 +14,8 @@ import 'package:calendar_app/screens/home_screen.dart';
 import 'package:calendar_app/screens/onboarding_screen.dart';
 import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/theme/app_theme.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
@@ -19,8 +23,20 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize notification service
+// Initialize notification service
   await NotificationService().initialize();
+
+  // Get FCM token and update in Firestore
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  final token = await messaging.getToken();
+  if (token != null) {
+    await _updateTokenInFirestore(token);
+  }
+
+  // Listen for token refresh
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    await _updateTokenInFirestore(newToken);
+  });
 
   // Check if onboarding has been shown
   final prefs = await SharedPreferences.getInstance();
@@ -33,13 +49,41 @@ void main() async {
   );
 }
 
+Future<void> _updateTokenInFirestore(String token) async {
+  final prefs = await SharedPreferences.getInstance();
+  final uid = prefs.getString('uid');
+
+  if (uid != null) {
+    String? deviceId = prefs.getString('deviceId');
+
+    // Generate and save a new deviceId if not found
+    if (deviceId == null) {
+      deviceId = const Uuid().v4();
+      await prefs.setString('deviceId', deviceId);
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(uid)
+          .collection('devices')
+          .doc(deviceId)
+          .set({
+        'fcmToken': token,
+        'lastActive': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Failed to update token in Firestore: $e');
+    }
+  } else {
+    debugPrint('UID not found in SharedPreferences.');
+  }
+}
+
 class MyApp extends ConsumerWidget {
   final bool showOnboarding;
 
-  const MyApp({
-    super.key,
-    required this.showOnboarding,
-  });
+  const MyApp({super.key, required this.showOnboarding});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +102,9 @@ class MyApp extends ConsumerWidget {
                   user != null ? const HomeScreen() : const AuthScreen(),
               loading: () => const Scaffold(
                 body: Center(
-                  child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
               error: (_, __) => const AuthScreen(),

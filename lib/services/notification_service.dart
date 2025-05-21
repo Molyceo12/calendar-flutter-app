@@ -2,8 +2,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:calendar_app/models/event.dart';
 
 class NotificationService {
@@ -12,81 +12,75 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // Private constructor
   NotificationService._internal();
 
-  // Singleton pattern
-  factory NotificationService() {
-    return _instance;
-  }
+  factory NotificationService() => _instance;
 
-  // Initialize notification service
   Future<void> initialize() async {
-    // Initialize timezone
     tz_data.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Africa/Kigali')); // Important!
 
-    // Initialize flutter_local_notifications for Android
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    // Initialize flutter_local_notifications for iOS
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+    const AndroidNotificationChannel eventChannel = AndroidNotificationChannel(
+      'event_channel', // id
+      'Event Notifications', // title
+      description: 'Notifications for scheduled events', // description
+      importance: Importance.high,
     );
 
-    // Combine platform-specific initialization settings
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
+    await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(eventChannel);
+
+    const initializationSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      ),
     );
 
-    // Initialize the plugin
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
+      onDidReceiveNotificationResponse: (response) {
         debugPrint('Notification tapped: ${response.payload}');
       },
     );
 
-    // Request notification permissions for iOS
+    // Android 13+ notifications permission
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      if (!await Permission.notification.isGranted) {
+        await Permission.notification.request();
+      }
+    }
+
+    // FCM permission
     await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Request notification permissions on Android 13+
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      final status = await Permission.notification.status;
-      if (!status.isGranted) {
-        await Permission.notification.request();
-      }
-    }
-
-    // Get the token for this device
     String? token = await _firebaseMessaging.getToken();
     debugPrint('FCM Token: $token');
 
-    // Handle foreground messages and show local notification
+    // Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Received a foreground message: ${message.messageId}');
+      debugPrint('Foreground message received: ${message.messageId}');
       RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
+      AndroidNotification? android = notification?.android;
 
       if (notification != null && android != null) {
         _flutterLocalNotificationsPlugin.show(
           notification.hashCode,
           notification.title,
           notification.body,
-          NotificationDetails(
+          const NotificationDetails(
             android: AndroidNotificationDetails(
               'fcm_default_channel',
               'FCM Notifications',
-              channelDescription: 'Firebase Cloud Messaging notifications',
+              channelDescription: 'Default FCM channel',
               importance: Importance.max,
               priority: Priority.high,
               icon: '@mipmap/ic_launcher',
@@ -98,58 +92,105 @@ class NotificationService {
       }
     });
 
-    // Handle background and terminated state messages
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('Notification clicked with message: ${message.messageId}');
-      // Handle navigation or other logic on notification tap
+      debugPrint(
+          'Notification clicked (onMessageOpenedApp): ${message.messageId}');
     });
+
+    RemoteMessage? initialMessage =
+        await _firebaseMessaging.getInitialMessage();
+    if (initialMessage != null) {
+      debugPrint('App launched via notification: ${initialMessage.messageId}');
+    }
   }
 
-  // Schedule a notification for an event 30 minutes before event time
+  /// Schedule a local notification
   Future<void> scheduleEventNotification(Event event) async {
-    if (!event.hasNotification) return;
+    final bool shouldNotify = event.hasNotification;
+    if (!shouldNotify) return;
 
-    final notificationTime = event.date.subtract(const Duration(minutes: 30));
+    final DateTime eventDate = event.date;
+
+    final DateTime notificationTime =
+        eventDate.subtract(const Duration(minutes: 30));
+
     if (notificationTime.isBefore(DateTime.now())) {
-      debugPrint('Notification time is in the past, not scheduling');
+      debugPrint('Event is in the past. Skipping notification.');
       return;
     }
 
-    final tz.TZDateTime scheduledTime = tz.TZDateTime.from(notificationTime, tz.local);
+    final tz.TZDateTime scheduledTime =
+        tz.TZDateTime.from(notificationTime, tz.local);
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'event_channel',
-      'Event Notifications',
-      channelDescription: 'Notifications for calendar events',
-      importance: Importance.high,
-      priority: Priority.high,
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'event_channel',
+        'Event Notifications',
+        channelDescription: 'Notifications for scheduled events',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    const NotificationDetails platformDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    debugPrint(
+        'Scheduling notification: ${event.title} at $scheduledTime for event: ${event.id}');
 
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       event.id.hashCode,
       event.title,
-      event.description.isNotEmpty ? event.description : 'Event reminder',
+      event.description.isNotEmpty
+          ? event.description
+          : 'You have an upcoming event.',
       scheduledTime,
-      platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      notificationDetails,
       payload: event.id,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dateAndTime,
     );
   }
 
-  // Cancel a notification for an event
+  /// Schedule a test notification 1 minute from now for debugging
+  Future<void> scheduleTestNotification() async {
+    final tz.TZDateTime scheduledTime =
+        tz.TZDateTime.now(tz.local).add(const Duration(minutes: 1));
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'test_channel',
+        'Test Notifications',
+        channelDescription: 'Notifications for testing purposes',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
+    debugPrint('Scheduling test notification at $scheduledTime');
+
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Test Notification',
+      'This is a test notification scheduled 1 minute from now.',
+      scheduledTime,
+      notificationDetails,
+      payload: 'test_notification',
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+    );
+  }
+
+  /// Cancel a scheduled notification
   Future<void> cancelEventNotification(Event event) async {
     await _flutterLocalNotificationsPlugin.cancel(event.id.hashCode);
+    debugPrint('Cancelled notification for event: ${event.id}');
   }
 }
