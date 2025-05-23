@@ -1,8 +1,7 @@
+import 'package:calendar_app/services/string_env.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-
-import 'get_server_key.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
@@ -19,9 +18,14 @@ class PushNotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      final serverKey = await GetServerKey().serverToken();
+      // Use the actual FCM server key (legacy server key) from StringEnv
+      final serverKey = StringEnv()['FCM_SERVER_KEY'];
+      if (serverKey == null || serverKey.isEmpty) {
+        debugPrint('FCM server key is missing');
+        return false;
+      }
 
-      debugPrint('Server Key: $serverKey');
+      debugPrint('Using FCM Server Key: $serverKey');
 
       final postUrl = Uri.parse('https://fcm.googleapis.com/fcm/send');
 

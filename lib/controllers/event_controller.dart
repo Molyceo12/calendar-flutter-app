@@ -87,12 +87,6 @@ class EventController extends StateNotifier<AsyncValue<void>> {
         throw Exception('User not authenticated');
       }
 
-      final events = await _dbService.getEventsForUser(userId);
-      final event = events.firstWhere(
-        (e) => e.id == id,
-        orElse: () => throw Exception('Event not found'),
-      );
-
       await _dbService.deleteEvent(id);
 
       await _firestore
@@ -130,9 +124,9 @@ class EventController extends StateNotifier<AsyncValue<void>> {
                 id: doc.id,
                 title: data['title'] ?? '',
                 description: data['description'] ?? '',
-                date: (data['date'] as Timestamp).toDate(),
+                date: (data['date'] != null && data['date'] is Timestamp) ? (data['date'] as Timestamp).toDate() : DateTime.now(),
                 color: data['color'] ?? '',
-                hasNotification: data['has_notification'] ?? false,
+                hasNotification: (data['has_notification'] is bool) ? data['has_notification'] : (data['has_notification'] == 1),
                 userId: userId,
               );
             }).toList());
@@ -155,6 +149,7 @@ class EventController extends StateNotifier<AsyncValue<void>> {
   void listenAndNotify() {
     streamAllEvents().listen((events) async {
       final now = DateTime.now();
+      debugPrint('Checking events for notifications at $now');
       final fcmToken = await getFcmToken();
       if (fcmToken == null) {
         debugPrint('FCM token not found for user');
@@ -163,11 +158,13 @@ class EventController extends StateNotifier<AsyncValue<void>> {
 
       for (final event in events) {
         final difference = event.date.difference(now);
-        if (difference.inMinutes == 30) {
+        debugPrint('Event ${event.id} scheduled at ${event.date}, difference in minutes: ${difference.inMinutes}');
+        if (difference.inMinutes >= 29 && difference.inMinutes <= 31) {
           final title = 'Upcoming Event: ${event.title}';
           final body = 'Your event "${event.title}" starts in 30 minutes.';
           final data = {'eventId': event.id};
 
+          debugPrint('Sending push notification for event ${event.id}');
           final success = await PushNotificationService().sendPushNotification(
             fcmToken: fcmToken,
             title: title,
@@ -177,6 +174,8 @@ class EventController extends StateNotifier<AsyncValue<void>> {
 
           if (success) {
             debugPrint('Push notification sent for event ${event.id}');
+          } else {
+            debugPrint('Failed to send push notification for event ${event.id}');
           }
         }
       }
