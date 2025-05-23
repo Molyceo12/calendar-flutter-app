@@ -5,6 +5,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:calendar_app/models/event.dart';
+import 'package:flutter/services.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -17,90 +19,145 @@ class NotificationService {
   factory NotificationService() => _instance;
 
   Future<void> initialize() async {
-    tz_data.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation('Africa/Kigali')); // Important!
+    try {
+      tz_data.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation('Africa/Kigali')); // Important!
 
-    const AndroidNotificationChannel eventChannel = AndroidNotificationChannel(
-      'event_channel', // id
-      'Event Notifications', // title
-      description: 'Notifications for scheduled events', // description
-      importance: Importance.high,
-    );
+      const AndroidNotificationChannel eventChannel =
+          AndroidNotificationChannel(
+        'event_channel', // id
+        'Event Notifications', // title
+        description: 'Notifications for scheduled events', // description
+        importance: Importance.high,
+      );
 
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(eventChannel);
+      const AndroidNotificationChannel fcmDefaultChannel =
+          AndroidNotificationChannel(
+        'fcm_default_channel',
+        'FCM Notifications',
+        description: 'Default FCM channel',
+        importance: Importance.max,
+      );
 
-    const initializationSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      ),
-    );
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(eventChannel);
 
-    await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (response) {
-        debugPrint('Notification tapped: ${response.payload}');
-      },
-    );
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(fcmDefaultChannel);
 
-    // Android 13+ notifications permission
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      if (!await Permission.notification.isGranted) {
-        await Permission.notification.request();
+      const initializationSettings = InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        ),
+      );
+
+      await _flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (response) {
+          debugPrint('Notification tapped: ${response.payload}');
+        },
+      );
+
+      // Android 13+ notifications permission
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        if (!await Permission.notification.isGranted) {
+          await Permission.notification.request();
+        }
       }
-    }
 
-    // FCM permission
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+      // FCM permission
+      await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    String? token = await _firebaseMessaging.getToken();
-    debugPrint('FCM Token: $token');
+      String? token = await _firebaseMessaging.getToken();
+      debugPrint('FCM Token: $token');
 
-    // Foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Foreground message received: ${message.messageId}');
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = notification?.android;
+      // Foreground messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('Foreground message received: ${message.messageId}');
+        RemoteNotification? notification = message.notification;
+        AndroidNotification? android = notification?.android;
 
-      if (notification != null && android != null) {
-        _flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'fcm_default_channel',
-              'FCM Notifications',
-              channelDescription: 'Default FCM channel',
-              importance: Importance.max,
-              priority: Priority.high,
-              icon: '@mipmap/ic_launcher',
+        if (notification != null && android != null) {
+          _flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'fcm_default_channel',
+                'FCM Notifications',
+                channelDescription: 'Default FCM channel',
+                importance: Importance.max,
+                priority: Priority.high,
+                icon: '@mipmap/ic_launcher',
+              ),
+              iOS: DarwinNotificationDetails(),
             ),
-            iOS: DarwinNotificationDetails(),
-          ),
-          payload: message.data['payload'] ?? '',
-        );
+            payload: message.data['payload'] ?? '',
+          );
+        } else {
+          debugPrint('Notification received but not shown on device: ${message.messageId}');
+        }
+      });
+
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint(
+            'Notification clicked (onMessageOpenedApp): ${message.messageId}');
+      });
+
+      RemoteMessage? initialMessage =
+          await _firebaseMessaging.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint(
+            'App launched via notification: ${initialMessage.messageId}');
       }
-    });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint(
-          'Notification clicked (onMessageOpenedApp): ${message.messageId}');
-    });
+      // Check exact alarm permission on Android 12+
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final bool canScheduleExactAlarms = await _checkExactAlarmPermission();
+        if (!canScheduleExactAlarms) {
+          debugPrint('Exact alarm permission not granted. Prompting user...');
+          await _requestExactAlarmPermission();
+        } else {
+          debugPrint('Exact alarm permission granted.');
+        }
+      }
+    } catch (e, stack) {
+      debugPrint('Error during NotificationService initialization: $e');
+      debugPrint('$stack');
+    }
+  }
 
-    RemoteMessage? initialMessage =
-        await _firebaseMessaging.getInitialMessage();
-    if (initialMessage != null) {
-      debugPrint('App launched via notification: ${initialMessage.messageId}');
+  Future<bool> _checkExactAlarmPermission() async {
+    try {
+      final bool canSchedule = await MethodChannel('android_alarm_manager')
+          .invokeMethod('canScheduleExactAlarms');
+      return canSchedule;
+    } catch (e) {
+      debugPrint('Error checking exact alarm permission: $e');
+      return false;
+    }
+  }
+
+  Future<void> _requestExactAlarmPermission() async {
+    try {
+      final AndroidIntent intent = AndroidIntent(
+        action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+      );
+      await intent.launch();
+    } catch (e) {
+      debugPrint('Error launching exact alarm permission settings: $e');
     }
   }
 
@@ -154,16 +211,19 @@ class NotificationService {
     );
   }
 
-  /// Schedule a test notification 1 minute from now for debugging
-  Future<void> scheduleTestNotification() async {
-    final tz.TZDateTime scheduledTime =
-        tz.TZDateTime.now(tz.local).add(const Duration(minutes: 1));
+  /// Cancel a scheduled notification
+  Future<void> cancelEventNotification(Event event) async {
+    await _flutterLocalNotificationsPlugin.cancel(event.id.hashCode);
+    debugPrint('Cancelled notification for event: ${event.id}');
+  }
 
+  /// Test method to show an immediate notification for testing
+  Future<void> showTestNotification() async {
     const NotificationDetails notificationDetails = NotificationDetails(
       android: AndroidNotificationDetails(
         'test_channel',
         'Test Notifications',
-        channelDescription: 'Notifications for testing purposes',
+        channelDescription: 'Channel for test notifications',
         importance: Importance.high,
         priority: Priority.high,
       ),
@@ -174,23 +234,12 @@ class NotificationService {
       ),
     );
 
-    debugPrint('Scheduling test notification at $scheduledTime');
-
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
+    await _flutterLocalNotificationsPlugin.show(
       0,
       'Test Notification',
-      'This is a test notification scheduled 1 minute from now.',
-      scheduledTime,
+      'This is a test notification.',
       notificationDetails,
-      payload: 'test_notification',
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+      payload: 'test_payload',
     );
-  }
-
-  /// Cancel a scheduled notification
-  Future<void> cancelEventNotification(Event event) async {
-    await _flutterLocalNotificationsPlugin.cancel(event.id.hashCode);
-    debugPrint('Cancelled notification for event: ${event.id}');
   }
 }

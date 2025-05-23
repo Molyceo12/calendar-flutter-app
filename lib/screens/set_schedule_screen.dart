@@ -78,7 +78,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
       lastDate: DateTime(2030),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context), 
+          data: Theme.of(context),
           child: child!,
         );
       },
@@ -156,6 +156,18 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
         // Schedule or cancel notification based on hasNotification
         if (_hasNotification) {
           await NotificationService().scheduleEventNotification(updatedEvent);
+          final notificationTime =
+              updatedEvent.date.subtract(const Duration(minutes: 30));
+          final timeRemaining = notificationTime.difference(DateTime.now());
+          debugPrint('Time remaining to notification: $timeRemaining');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Time remaining to notification: $timeRemaining'),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
         } else {
           await NotificationService().cancelEventNotification(updatedEvent);
         }
@@ -185,6 +197,18 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
         // Schedule or cancel notification based on hasNotification
         if (_hasNotification) {
           await NotificationService().scheduleEventNotification(newEvent);
+          final notificationTime =
+              newEvent.date.subtract(const Duration(minutes: 30));
+          final timeRemaining = notificationTime.difference(DateTime.now());
+          debugPrint('Time remaining to notification: $timeRemaining');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Time remaining to notification: $timeRemaining'),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
         } else {
           await NotificationService().cancelEventNotification(newEvent);
         }
@@ -327,6 +351,7 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     onPressed: _saveEvent,
                     isLoading: _isLoading,
                   ),
+                  // Removed test notification button as requested
                 ],
               ),
             ),

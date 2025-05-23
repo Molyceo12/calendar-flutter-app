@@ -18,23 +18,31 @@ import 'package:calendar_app/theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  debugPrint('Starting Firebase initialization...');
   // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  debugPrint('Firebase initialized.');
 
-// Initialize notification service
+  debugPrint('Starting NotificationService initialization...');
+  // Initialize notification service
   await NotificationService().initialize();
+  debugPrint('NotificationService initialized.');
 
+  debugPrint('Getting FCM token...');
   // Get FCM token and update in Firestore
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   final token = await messaging.getToken();
+  debugPrint('FCM token received: $token');
   if (token != null) {
     await _updateTokenInFirestore(token);
+    debugPrint('FCM token updated in Firestore.');
   }
 
   // Listen for token refresh
   FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    debugPrint('FCM token refreshed: $newToken');
     await _updateTokenInFirestore(newToken);
   });
 
@@ -42,6 +50,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final showOnboarding = prefs.getBool('showOnboarding') ?? true;
 
+  debugPrint('Running app with showOnboarding=$showOnboarding');
   runApp(
     ProviderScope(
       child: MyApp(showOnboarding: showOnboarding),

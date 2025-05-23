@@ -71,8 +71,8 @@ class DatabaseService {
         ],
       );
       return List.generate(maps.length, (i) => Event.fromMap(maps[i]));
-    } catch (e) {
-      debugPrint('Error in getEventsForMonth: \$e\n\$stack');
+    } catch (e, stack) {
+      debugPrint('Error in getEventsForMonth: $e\n$stack');
       rethrow;
     }
   }
@@ -86,8 +86,8 @@ class DatabaseService {
         event.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-    } catch (e) {
-      debugPrint('Error in insertEvent: \$e\n\$stack');
+    } catch (e, stack) {
+      debugPrint('Error in insertEvent: $e\n$stack');
       rethrow;
     }
   }
@@ -102,8 +102,8 @@ class DatabaseService {
         where: 'id = ?',
         whereArgs: [event.id],
       );
-    } catch (e) {
-      debugPrint('Error in updateEvent: \$e\n\$stack');
+    } catch (e, stack) {
+      debugPrint('Error in updateEvent: $e\n$stack');
       rethrow;
     }
   }
@@ -117,8 +117,8 @@ class DatabaseService {
         where: 'id = ?',
         whereArgs: [id],
       );
-    } catch (e) {
-      debugPrint('Error in deleteEvent: \$e\n\$stack');
+    } catch (e, stack) {
+      debugPrint('Error in deleteEvent: $e\n$stack');
       rethrow;
     }
   }
@@ -133,8 +133,8 @@ class DatabaseService {
         whereArgs: [userId],
       );
       return List.generate(maps.length, (i) => Event.fromMap(maps[i]));
-    } catch (e) {
-      debugPrint('Error in getEventsForUser: \$e\n\$stack');
+    } catch (e, stack) {
+      debugPrint('Error in getEventsForUser: $e\n$stack');
       rethrow;
     }
   }
