@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/models/event.dart';
 
 class NotificationToggle extends StatefulWidget {
@@ -27,19 +26,12 @@ class _NotificationToggleState extends State<NotificationToggle> {
     _toggleValue = widget.value;
   }
 
-  Future<void> _handleToggle(bool newValue) async {
+  void _handleToggle(bool newValue) {
     setState(() {
       _toggleValue = newValue;
     });
 
-    final updatedEvent = widget.event.copyWith(hasNotification: newValue);
-
-    if (newValue) {
-      await NotificationService().scheduleEventNotification(updatedEvent);
-    } else {
-      await NotificationService().cancelEventNotification(updatedEvent);
-    }
-
+    // Just notify the parent and do not handle any notifications
     widget.onChanged(newValue);
   }
 
@@ -56,7 +48,7 @@ class _NotificationToggleState extends State<NotificationToggle> {
         ),
         Switch(
           activeColor: colorScheme.primary,
-          inactiveThumbColor: colorScheme.onSurface.withValues(alpha: 0.6),
+          inactiveThumbColor: colorScheme.onSurface.withValues(alpha:  0.6),
           inactiveTrackColor: colorScheme.onSurface.withValues(alpha: 0.3),
           value: _toggleValue,
           onChanged: _handleToggle,

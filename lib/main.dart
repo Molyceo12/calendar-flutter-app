@@ -12,7 +12,6 @@ import 'package:calendar_app/providers/theme_provider.dart';
 import 'package:calendar_app/screens/auth_screen.dart';
 import 'package:calendar_app/screens/home_screen.dart';
 import 'package:calendar_app/screens/onboarding_screen.dart';
-import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/theme/app_theme.dart';
 
 Future<void> main() async {
@@ -27,9 +26,6 @@ Future<void> main() async {
 
   debugPrint('Starting NotificationService initialization...');
   // Initialize notification service
-  await NotificationService().initialize();
-  debugPrint('NotificationService initialized.');
-
   debugPrint('Getting FCM token...');
   // Get FCM token and update in Firestore
   FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -73,7 +69,7 @@ Future<void> _updateTokenInFirestore(String token) async {
 
     try {
       await FirebaseFirestore.instance
-          .collection('Users')
+          .collection('users')
           .doc(uid)
           .collection('devices')
           .doc(deviceId)

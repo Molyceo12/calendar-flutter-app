@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -32,26 +33,24 @@ class AuthService {
       final String? fcmToken = await FirebaseMessaging.instance.getToken();
       final String uid = credential.user!.uid;
 
+      // Store uid in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('uid', uid);
+
       // Get device ID
       final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       String deviceId;
 
-      if (Platform.isAndroid) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         deviceId = androidInfo.id;
-      } else if (Platform.isIOS) {
-        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        deviceId = iosInfo.identifierForVendor!;
-      } else {
-        deviceId = 'unknown_device';
-      }
 
       if (fcmToken != null) {
         await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
             .collection('devices')
             .doc(deviceId)
             .set({
-          'userId': uid,
           'fcmToken': fcmToken,
           'lastActive': FieldValue.serverTimestamp(),
           'platform': Platform.operatingSystem,
@@ -73,9 +72,16 @@ class AuthService {
         password: password,
       );
       final uid = userCredential.user!.uid;
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid);
+
+      // Create user document with empty subcollections devices and events
+      final userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
+      await userDocRef.set({
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      
+      await userDocRef.collection('devices').doc('init').set({'init': true});
+      await userDocRef.collection('events').doc('init').set({'init': true});
+
       return userCredential;
     } catch (e) {
       rethrow;

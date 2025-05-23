@@ -1,166 +1,82 @@
-import 'package:calendar_app/providers/auth_provider.dart';
-import 'package:calendar_app/providers/event_provider.dart';
-import 'package:calendar_app/screens/set_schedule_screen.dart';
-import 'package:calendar_app/widgets/add_event_fab.dart';
-import 'package:calendar_app/widgets/calendar_app_bar.dart';
-import 'package:calendar_app/widgets/calendar_widget.dart';
-import 'package:calendar_app/widgets/confirmation_dialog.dart';
-import 'package:calendar_app/widgets/date_header.dart';
-import 'package:calendar_app/widgets/events_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:calendar_app/providers/event_provider.dart';
+import 'package:calendar_app/screens/event_form_screen.dart';
+import 'package:calendar_app/widgets/event_card.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDay = _focusedDay;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final eventsAsync = ref.watch(eventsForMonthProvider(_focusedDay));
-    final theme = Theme.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+final eventsAsync = ref.watch(eventsForMonthProvider(DateTime.now()));
+    final controller = ref.read(eventControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: CalendarAppBar(
-        title: 'Calendar',
-        onLogoutPressed: _showLogoutDialog,
+      appBar: AppBar(
+        title: const Text('My Calendar'),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            CalendarWidget(
-              calendarFormat: _calendarFormat,
-              focusedDay: _focusedDay,
-              selectedDay: _selectedDay,
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-              },
-              onFormatChanged: (format) {
-                setState(() {
-                  _calendarFormat = format;
-                });
-              },
-              onPageChanged: (focusedDay) {
-                _focusedDay = focusedDay;
-              },
-              eventsAsync: eventsAsync,
-            ),
-            DateHeader(selectedDay: _selectedDay!),
-            const Divider(),
-            SizedBox(
-              height: 400, // Set a fixed height or adjust as needed
-              child: EventsList(
-                selectedDay: _selectedDay!,
-                eventsAsync: eventsAsync,
-                onDeleteEvent: _deleteEvent,
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AddEventFAB(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      SetScheduleScreen(selectedDate: _selectedDay!),
+      body: eventsAsync.when(
+        data: (events) {
+          if (events.isEmpty) {
+            return const Center(child: Text("No events found."));
+          }
+
+          return ListView.builder(
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return EventCard(
+                event: event,
+                onEdit: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EventFormScreen(event: event),
+                  ),
                 ),
+                onDelete: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Delete Event"),
+                      content: const Text(
+                          "Are you sure you want to delete this event?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("Cancel"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text("Delete"),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed ?? false) {
+                    await controller.deleteEvent(event.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Event deleted')),
+                    );
+                  }
+                },
               );
             },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EventFormScreen(),
           ),
-          const SizedBox(height: 12),
-          // Removed test notification FloatingActionButton as showTestNotification no longer exists
-          // You can implement FCM notification trigger here if needed
-        ],
+        ),
+        child: const Icon(Icons.add),
       ),
     );
-  }
-
-  Future<void> _deleteEvent(String id) async {
-    final theme = Theme.of(context);
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => ConfirmationDialog(
-        title: 'Delete Event',
-        content: 'Are you sure you want to delete this event?',
-        confirmText: 'Delete',
-        confirmColor: theme.colorScheme.primary,
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await ref.read(eventControllerProvider.notifier).deleteEvent(id);
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Event deleted successfully'),
-            backgroundColor: theme.colorScheme.primary,
-          ),
-        );
-      } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete event: $e'),
-            backgroundColor: theme.colorScheme.error,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _showLogoutDialog() async {
-    final theme = Theme.of(context);
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => ConfirmationDialog(
-        title: 'Logout',
-        content: 'Are you sure you want to logout?',
-        confirmText: 'Logout',
-        confirmColor: theme.colorScheme.primary,
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await ref.read(authControllerProvider.notifier).signOut();
-      } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to logout: $e'),
-            backgroundColor: theme.colorScheme.error,
-          ),
-        );
-      }
-    }
   }
 }

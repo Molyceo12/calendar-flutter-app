@@ -1,7 +1,6 @@
 import 'package:calendar_app/models/event.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
 import 'package:calendar_app/providers/event_provider.dart';
-import 'package:calendar_app/services/notification_service.dart';
 import 'package:calendar_app/widgets/color_selector.dart';
 import 'package:calendar_app/widgets/custom_button.dart';
 import 'package:calendar_app/widgets/date_time_picker_card.dart';
@@ -46,8 +45,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Initialize with event data if editing
     if (widget.event != null) {
       _titleController = TextEditingController(text: widget.event!.title);
       _descriptionController =
@@ -69,19 +66,12 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
     super.dispose();
   }
 
-  // Select date
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -97,17 +87,10 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
     }
   }
 
-  // Select time
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selectedDate),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context), // Use the current theme
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -123,11 +106,8 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
     }
   }
 
-  // Save event
   Future<void> _saveEvent() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
@@ -135,12 +115,9 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
 
     try {
       final userId = ref.read(userIdProvider);
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
+      if (userId == null) throw Exception('User not authenticated');
 
       if (widget.event != null) {
-        // Update existing event
         final updatedEvent = widget.event!.copyWith(
           title: _titleController.text,
           description: _descriptionController.text,
@@ -153,25 +130,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
             .read(eventControllerProvider.notifier)
             .updateEvent(updatedEvent);
 
-        // Schedule or cancel notification based on hasNotification
-        if (_hasNotification) {
-          await NotificationService().scheduleEventNotification(updatedEvent);
-          final notificationTime =
-              updatedEvent.date.subtract(const Duration(minutes: 30));
-          final timeRemaining = notificationTime.difference(DateTime.now());
-          debugPrint('Time remaining to notification: $timeRemaining');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Time remaining to notification: $timeRemaining'),
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-        } else {
-          await NotificationService().cancelEventNotification(updatedEvent);
-        }
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -182,7 +140,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
           Navigator.of(context).pop();
         }
       } else {
-        // Create new event
         final newEvent = Event(
           title: _titleController.text,
           description: _descriptionController.text,
@@ -193,25 +150,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
         );
 
         await ref.read(eventControllerProvider.notifier).createEvent(newEvent);
-
-        // Schedule or cancel notification based on hasNotification
-        if (_hasNotification) {
-          await NotificationService().scheduleEventNotification(newEvent);
-          final notificationTime =
-              newEvent.date.subtract(const Duration(minutes: 30));
-          final timeRemaining = notificationTime.difference(DateTime.now());
-          debugPrint('Time remaining to notification: $timeRemaining');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Time remaining to notification: $timeRemaining'),
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-        } else {
-          await NotificationService().cancelEventNotification(newEvent);
-        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -263,16 +201,13 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
       ),
       body: Stack(
         children: [
-          // Decorative background
           const DecorativeBackground(),
-
           SafeArea(
             child: Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
-                  // Header
                   Text(
                     widget.event != null
                         ? "Update your\nschedule"
@@ -280,21 +215,15 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     style: textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 32),
-                  // Title field
                   const SectionHeader(title: "Event Title"),
                   StyledTextFormField(
                     controller: _titleController,
                     hintText: "Enter event title...",
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a title';
-                      }
-                      return null;
-                    },
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Please enter a title'
+                        : null,
                   ),
                   const SizedBox(height: 24),
-
-                  // Date and time
                   const SectionHeader(title: "Date & Time"),
                   DateTimePickerCard(
                     selectedDate: _selectedDate,
@@ -302,8 +231,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     selectTime: _selectTime,
                   ),
                   const SizedBox(height: 24),
-
-                  // Description field
                   const SectionHeader(title: "Description"),
                   StyledTextFormField(
                     controller: _descriptionController,
@@ -311,8 +238,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 24),
-
-                  // Color selection
                   const SectionHeader(title: "Color"),
                   ColorSelector(
                     selectedColor: _selectedColor,
@@ -324,8 +249,6 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-
-                  // Notification toggle
                   NotificationToggle(
                     value: _hasNotification,
                     event: widget.event ??
@@ -344,14 +267,11 @@ class _SetScheduleScreenState extends ConsumerState<SetScheduleScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
-
-                  // Submit button
                   CustomButton(
                     text: widget.event != null ? 'Update Event' : 'Add Event',
                     onPressed: _saveEvent,
                     isLoading: _isLoading,
                   ),
-                  // Removed test notification button as requested
                 ],
               ),
             ),
