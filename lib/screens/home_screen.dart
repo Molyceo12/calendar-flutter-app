@@ -32,15 +32,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Initialize Firebase Messaging and save FCM token
     final userId = ref.read(userIdProvider);
     if (userId != null) {
-      // Import FirebaseMessagingService at the top of the file
-      // and initialize here
       Future.microtask(() async {
         await FirebaseMessagingService().initialize(userId);
       });
     }
-
-    // Start listening to events and send notifications
-    ref.read(eventControllerProvider.notifier).listenAndNotify();
   }
 
   @override
@@ -80,7 +75,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             DateHeader(selectedDay: _selectedDay!),
             const Divider(),
             SizedBox(
-              height: 400, // Set a fixed height or adjust as needed
+              height: 400,
               child: EventsList(
                 selectedDay: _selectedDay!,
                 eventsAsync: eventsAsync,
@@ -90,24 +85,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AddEventFAB(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      SetScheduleScreen(selectedDate: _selectedDay!),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          // Removed test notification FloatingActionButton as showTestNotification no longer exists
-          // You can implement FCM notification trigger here if needed
-        ],
+      floatingActionButton: AddEventFAB(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  SetScheduleScreen(selectedDate: _selectedDay!),
+            ),
+          );
+        },
       ),
     );
   }

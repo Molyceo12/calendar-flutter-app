@@ -1,16 +1,45 @@
+import 'dart:convert';
 import 'package:calendar_app/services/string_env.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:googleapis_auth/auth_io.dart';
 
 class PushNotificationService {
-  static final PushNotificationService _instance = PushNotificationService._internal();
+  static final PushNotificationService _instance =
+      PushNotificationService._internal();
 
   PushNotificationService._internal();
 
   factory PushNotificationService() => _instance;
 
-  /// Send push notification using FCM HTTP API and server key
+  /// Obtain OAuth2 access token using service account credentials
+  Future<String?> _getAccessToken() async {
+    try {
+      final serviceAccountJson = _getServiceAccountJson();
+      if (serviceAccountJson == null) {
+        debugPrint('Service account JSON is missing or invalid');
+        return null;
+      }
+
+      final accountCredentials =
+          ServiceAccountCredentials.fromJson(serviceAccountJson);
+
+      final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+
+      final client = await clientViaServiceAccount(accountCredentials, scopes);
+
+      final accessToken = client.credentials.accessToken.data;
+
+      client.close();
+
+      return accessToken;
+    } catch (e) {
+      debugPrint('Error obtaining access token: $e');
+      return null;
+    }
+  }
+
+  /// Send push notification using FCM HTTP v1 API with OAuth2 access token
   Future<bool> sendPushNotification({
     required String fcmToken,
     required String title,
@@ -18,36 +47,39 @@ class PushNotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      // Use the actual FCM server key (legacy server key) from StringEnv
-      final serverKey = StringEnv()['FCM_SERVER_KEY'];
-      if (serverKey == null || serverKey.isEmpty) {
-        debugPrint('FCM server key is missing');
+      final accessToken = await _getAccessToken();
+      if (accessToken == null) {
+        debugPrint('Failed to obtain access token');
         return false;
       }
 
-      debugPrint('Using FCM Server Key: $serverKey');
+      final serviceAccountJson = _getServiceAccountJson();
+      if (serviceAccountJson == null) {
+        debugPrint('Service account JSON is missing or invalid');
+        return false;
+      }
 
-      final postUrl = Uri.parse('https://fcm.googleapis.com/fcm/send');
-
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'key=$serverKey',
-      };
-
-      final notification = {
-        'title': title,
-        'body': body,
-      };
+      final url = Uri.parse(
+          'https://fcm.googleapis.com/v1/projects/${serviceAccountJson['project_id']}/messages:send');
 
       final message = {
-        'to': fcmToken,
-        'notification': notification,
-        'data': data ?? {},
+        'message': {
+          'token': fcmToken,
+          'notification': {
+            'title': title,
+            'body': body,
+          },
+          'data': data ?? {},
+        }
       };
 
       final response = await http.post(
-        postUrl,
-        headers: headers,
+        url,
+       headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken',
+        },
+
         body: json.encode(message),
       );
 
@@ -61,6 +93,30 @@ class PushNotificationService {
     } catch (e) {
       debugPrint('Error sending push notification: $e');
       return false;
+    }
+  }
+
+  Map<String, dynamic>? _getServiceAccountJson() {
+    try {
+      final privateKey =
+          StringEnv()['PRIVATE_KEY']?.replaceAll('\n', '\\n') ?? '';
+      final jsonString = '''{
+        "type": "${StringEnv()['TYPE']}",
+        "project_id": "${StringEnv()['PROJECT_ID']}",
+        "private_key_id": "${StringEnv()['PRIVATE_KEY_ID']}",
+        "private_key": "$privateKey",
+        "client_email": "${StringEnv()['CLIENT_EMAIL']}",
+        "client_id": "${StringEnv()['CLIENT_ID']}",
+        "auth_uri": "${StringEnv()['AUTH_URI']}",
+        "token_uri": "${StringEnv()['TOKEN_URI']}",
+        "auth_provider_x509_cert_url": "${StringEnv()['AUTH_PROVIDER_X509_CERT_URL']}",
+        "client_x509_cert_url": "${StringEnv()['CLIENT_X509_CERT_URL']}"
+      }''';
+
+      return json.decode(jsonString);
+    } catch (e) {
+      debugPrint('Error parsing service account JSON: $e');
+      return null;
     }
   }
 }

@@ -4,41 +4,43 @@ class StringEnv extends MapBase<String, String> {
   final Map<String, String> _env = const {
     'TYPE': 'service_account',
     'PROJECT_ID': 'calendar-91627',
-    'PRIVATE_KEY_ID': '940e5b1e6c6940f6e2e99ae3f0cd02c7df9dc40f',
+    'PRIVATE_KEY_ID': '37ea0b6b9a28ce562d595d03a96b2c3c627ee3da',
     'PRIVATE_KEY': '''-----BEGIN PRIVATE KEY-----
-MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDlk09mkHSdF5Tp
-0fsfm8YyPA1eg8zPDBUFJfvydoMzecExHvGAQ6XNa+c9CoW0E8lWOg/jafzsU2ka
-stZ9YQ59Wi69RnB+U3lCpj3HnIOkYOHnz9G1ZKw18qTjhqWTu+JrniW95LTOxMvh
-Mb2m3RzkPJguJwOzr+H/mdYbSTM3dygA9dajRIVWfVUGQJishDjpKFICvXRe8dGx
-P/wcypJaLF+H9LHpt5b8AB3ZQ6BvY2/tb/KESwkIl8f1Hktr32ZqkURRTdZ7Ttlq
-VXSj3AiZInD4klg0Ny96xLCpO9cyRJJ4crd1TzV83QFf2RHnq9aHUO60Vqecwlg9
-MkvR2p0HAgMBAAECggEADEyxTH5BHn4kxnGEt0OkwYyRw3ZjPX/ZC8lmWgNQcdcR
-ldH3FVdKevAk15KIlEZvxdS0L4u+TGOxoLJj0cbRPGpdplqvlzezVPH2zbV3ILzn
-YtXcVzq5YTs1QKgLl0J8gHsyFsjkiPlmhOj3JLP5oslo9nwKSOZg63fwo83vAQch
-cDJLrWlz8L40XS+S1OIa3z212UC+QwPcc1GEMKYBUyyCoTZT1CLnYRoC2DvZdGYB
-098/2NC+b0sQjwQLhKkRr0xNRvE7PwXrTZnkV4KQxtIddcA9OEeqUhQLPIr6sFz/
-5kkMYpzd11znhpUw9jf0UFw+7qczE09JhAE+Kw6cWQKBgQD5krMv1yZRGaDaZUPE
-uNlveXT8ffsptB2DfAfVPLyCcTQmElh1pfAylh6Kcw5RXASOdCocdHfzx4FwYXPI
-H/EzGeEN3+0vFECGyLYQI0Gpy27x8B/4j7TJ1ZIqO+qliZQswLcbmhZfvb50Xc7G
-g+x4hR44c6tT2WnH6Fca292vLwKBgQDrfMbY1cf/m0gWM/eQonAG4vcx3j/kAMT1
-3THeaitNFLD7LYeM24ZLWlhTf/fFZBKpMiGPPKhgNyWwN7f8lHhEbB2fA8r3tO+z
-dGRTyevHK7C6vn03DfVFnrTBnJVu5yKUdOoWvBuBC2oFYjq9dtsq/0DGQGqmu/e9
-VQ5ck2e5qQKBgHyqpCmUnoZKeAhAJ18AO1Us5ZwuziSh3VBNx5fj9AJwy+zsoxV5
-o4eRZ4YfPRq1DW2fZ125bCXxFZ5uf6iLFDBDkCEfJ1qqEiWB4zgidG19uljOaxn9
-pwBfV9kS/v5bwBGu3ojCKsT+gkGcjmqpgZkeXd8zIHUNGIMMc15uT8lvAoGANfod
-4inuc+p19ZDn2CFDqHBx1N5qqqp6exi+i4qubjal8o0XGvRerfsBb/JPKtGrbVju
-VFTFC3jYjLHY3G5zustFZuOJrImuv+WX8ZTBFKAxHDz5mpr6c4DTUeXAYvFb/cdm
-uNtZOpURMja33CHYTty/TjIJwDopqR5L8nBfQDECgYBuJScSJaBU/tblaTFwPgNm
-Lc0nitZm/iTXamecszPLRfoCIKxqfNkTDakkX3g4CDy8+4BUD7eEvWQXtY5T4m3P
-5xAW5kkdv+eLVHRVeo4KT2DpQQRPm1jz21ylDtwGQuQLGAEQzbTYEexIV64jBiWG
-J4B9wS85APKv/BzNNx974A==
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCy61/pAceffcSV
+gcTIZeEjoPm2OnFug23rB4w7EWlmZrdxnD+nv7mMC6b67CV5+//z1E248xIQpQ/M
+IExjnu88UO99GBPOAEc7qnKElxS6r6uke3tDlcfLhvOVMovmyR7qNE3rYKdZU6/D
+e+3NkwINbIYcnc5rr/gGWd1nqMLhZlOXu4csW6kXoLq6ArOwa91hCqyvq9qj/32P
+XjZuJ0I2ouk8OU5KvVwML20s2ELOxE14mGxzMR5zJiEh/RytpZo8kRrzyMbrsf2i
+4AnusK3pSBxKVTwurjCKwxRE/uXPxmh11uHTHOJyv5+tGtUMBAdnGKCV294mj7be
+pJDDXlSXAgMBAAECggEAKpv6bdvCJh4GDJLogc8ddGY4QekeLXL4YOIdx81oO/5X
+TqOm1zTGI+98d0J41FmqxW84iUS99x/QKM1CU/E8STF/L1vmD4eqby+y8Ren1KPU
+bSoJG3nWqIY9iTkN70rTZXRKYDVW9WOENrpTUkNh2D+RmswMJkI0f5K0MyUSMCpP
+1S5WF2CYf8TZwCOPK0CzMxCx8gfKDLHUkUF3OVmFjouQkJpdQd7UChhQiaCzs3Oi
+8NK6te/rl2AOL6jMe2CyidKBH0tq2y1PMyAuP9L77Ah9AKdmOsxeB5eW0OGgeM/l
+kARQdP/dPiF4Unodz7I0gfu2D7z2pigMn7AL0ebdoQKBgQDe/J6kG35nFiGGCDNF
+A4lZRQO8wZJxmDAJUJeER218ILX3im8eeRLmgoziq3ehpcArf4PNz+CpMQG9MpIo
+TSsDO0W4Frc09jOiNQkbWygOCZKjORmi5NOOUC5yuOcdar6k/SDWhrzqtws78QIj
+Tnlz36Sy4+yo80LIyLWj6PWYtwKBgQDNaJDv/uJcandhr7r1BaPkgHoZHNvLJAnk
+NNX1aYdMCNWgWBxqBvSsUqPiRGfqPQvNdd3zNLHOPpz84CfXi/uz1xDdCjcrjJkD
+VT8F/7H+1clzTsjIuqbL/Wwilc3Vycadit7covt5gCszcFfWtMpWT/feUZQJfosK
+jFCLNfCDIQKBgHYkvFzQoFk39Y0RHTDsncHpegBxQwjijFjzFUQloBGLNz4vX45y
+sZvmAYU7OggwTK//QLMz96FM8NHwUFYABNESf274whrScyr3FJsk4gUF92Z5o2aV
+/KzDOMjZxMHmQ5og71waSU/GqbIZkHtqYZkOHjIV5tbhBDpjdTGiBTXjAoGBAKlI
+gyJ3QiB90dNdG0wxkMeRpo6pvO5mzgwYCzkM9mcQZNaXpxsujliyZsPkMmvWUbLL
+b9au19asvX6eUdePUyn8lbZFZABtB/G6QI12FEB7+mEgTdM4GJzHR2YdZZzKhPhz
+aYYWf/+7RF9JN+sH5jVKBHJhcwp8EqTnzL1d/9BhAoGAJGlSmgwQhUmoboskCjyU
+rnnXB8ZjTZd3llWR46A/+GBcXplYeaJP7LNjdxOWI0ZkP9+7gRTcuLPEoWF1orxO
+X/VGn44uV5lWCJhaseOOQAeK+bGUsKYRprIMQ3FTB+2WtfJG+LuhUTgpBQx7V6fQ
+sIoZ0N5eEj+uohbZyZKzNtE=
 -----END PRIVATE KEY-----''',
-    'CLIENT_EMAIL': 'calendar-91627@appspot.gserviceaccount.com',
-    'CLIENT_ID': '110800123390369728735',
+    'CLIENT_EMAIL':
+        'firebase-adminsdk-fbsvc@calendar-91627.iam.gserviceaccount.com',
+    'CLIENT_ID': '104332548520861065057',
     'AUTH_URI': 'https://accounts.google.com/o/oauth2/auth',
     'TOKEN_URI': 'https://oauth2.googleapis.com/token',
     'AUTH_PROVIDER_X509_CERT_URL': 'https://www.googleapis.com/oauth2/v1/certs',
-    'CLIENT_X509_CERT_URL': 'https://www.googleapis.com/robot/v1/metadata/x509/calendar-91627%40appspot.gserviceaccount.com',
+    'CLIENT_X509_CERT_URL':
+        'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40calendar-91627.iam.gserviceaccount.com',
     'UNIVERSE_DOMAIN': 'googleapis.com',
   };
 
@@ -86,11 +88,10 @@ J4B9wS85APKv/BzNNx974A==
   @override
   int get length => _env.length;
 
- @override
+  @override
   String putIfAbsent(String key, String Function() ifAbsent) {
     throw UnsupportedError('Cannot modify environment variables');
   }
-
 
   @override
   String? remove(Object? key) {

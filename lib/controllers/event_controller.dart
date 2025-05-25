@@ -1,11 +1,11 @@
-import 'package:calendar_app/providers/event_provider.dart';
-import 'package:calendar_app/services/push_notification_service.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:calendar_app/models/event.dart';
-import 'package:calendar_app/services/database_service.dart';
 import 'package:calendar_app/providers/auth_provider.dart';
+import 'package:calendar_app/providers/event_provider.dart';
+import 'package:calendar_app/services/database_service.dart';
+import 'package:calendar_app/services/push_notification_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EventController extends StateNotifier<AsyncValue<void>> {
   final DatabaseService _dbService;
@@ -15,40 +15,47 @@ class EventController extends StateNotifier<AsyncValue<void>> {
   EventController(this._dbService, this._ref)
       : super(const AsyncValue.data(null));
 
-  // Create a new event
   Future<void> createEvent(Event event) async {
     state = const AsyncValue.loading();
     try {
-      // Save to SQLite
+      // Save to local database
       await _dbService.insertEvent(event);
 
-      // Save to Firestore under user's events subcollection
       final userId = _ref.read(userIdProvider);
       if (userId != null) {
+        // Save to Firestore
         final eventMap = event.toMap();
         eventMap['date'] = Timestamp.fromDate(event.date);
-        eventMap['userId'] = userId;
         await _firestore
             .collection('users')
             .doc(userId)
             .collection('events')
             .doc(event.id)
             .set(eventMap);
+
+        // Schedule notification if enabled
+        if (event.hasNotification) {
+          await _scheduleEventNotification(event, userId);
+        }
+
+        // Send confirmation notification
+        await _sendEventNotification(
+          event: event,
+          title: 'Event Created: ${event.title}',
+          body:
+              'Your event "${event.title}" has been created for ${event.date}.',
+        );
       }
 
-      // Refresh events list
       _ref.invalidate(eventsForMonthProvider);
-
       state = const AsyncValue.data(null);
     } catch (e, stack) {
-      debugPrint('Error in createEvent: $e');
-      debugPrint('$stack');
+      debugPrint('Error in createEvent: $e\n$stack');
       state = AsyncValue.error(e, stack);
       rethrow;
     }
   }
 
-  // Update an existing event
   Future<void> updateEvent(Event event) async {
     state = const AsyncValue.loading();
     try {
@@ -58,61 +65,64 @@ class EventController extends StateNotifier<AsyncValue<void>> {
       if (userId != null) {
         final eventMap = event.toMap();
         eventMap['date'] = Timestamp.fromDate(event.date);
-        eventMap['userId'] = userId;
         await _firestore
             .collection('users')
             .doc(userId)
             .collection('events')
             .doc(event.id)
             .update(eventMap);
+
+        // Update scheduled notification
+        if (event.hasNotification) {
+          await _scheduleEventNotification(event, userId);
+        } else {
+          await _firestore
+              .collection('scheduled_notifications')
+              .doc(event.id)
+              .delete();
+        }
       }
 
       _ref.invalidate(eventsForMonthProvider);
-
       state = const AsyncValue.data(null);
     } catch (e, stack) {
-      debugPrint('Error in updateEvent: $e');
-      debugPrint('$stack');
+      debugPrint('Error in updateEvent: $e\n$stack');
       state = AsyncValue.error(e, stack);
       rethrow;
     }
   }
 
-  // Delete an event
   Future<void> deleteEvent(String id) async {
     state = const AsyncValue.loading();
     try {
       final userId = _ref.read(userIdProvider);
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
+      if (userId == null) throw Exception('User not authenticated');
 
       await _dbService.deleteEvent(id);
 
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('events')
-          .doc(id)
-          .delete();
+      await Future.wait([
+        _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('events')
+            .doc(id)
+            .delete(),
+        _firestore.collection('scheduled_notifications').doc(id).delete(),
+      ]);
 
       _ref.invalidate(eventsForMonthProvider);
-
       state = const AsyncValue.data(null);
     } catch (e, stack) {
-      debugPrint('Error in deleteEvent: $e');
-      debugPrint('$stack');
+      debugPrint('Error in deleteEvent: $e\n$stack');
       state = AsyncValue.error(e, stack);
       rethrow;
     }
   }
 
-  // Stream of all events for current user from Firestore
   Stream<List<Event>> streamAllEvents() {
     final userId = _ref.read(userIdProvider);
-    if (userId == null) {
-      return const Stream.empty();
-    }
+    if (userId == null) return const Stream.empty();
+
     return _firestore
         .collection('users')
         .doc(userId)
@@ -124,61 +134,74 @@ class EventController extends StateNotifier<AsyncValue<void>> {
                 id: doc.id,
                 title: data['title'] ?? '',
                 description: data['description'] ?? '',
-                date: (data['date'] != null && data['date'] is Timestamp) ? (data['date'] as Timestamp).toDate() : DateTime.now(),
+                date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
                 color: data['color'] ?? '',
-                hasNotification: (data['has_notification'] is bool) ? data['has_notification'] : (data['has_notification'] == 1),
+                hasNotification: data['hasNotification'] ?? false,
                 userId: userId,
               );
             }).toList());
   }
 
-  // Get FCM token for current user from Firestore
-  Future<String?> getFcmToken() async {
-    final userId = _ref.read(userIdProvider);
-    if (userId == null) return null;
+  Future<void> _scheduleEventNotification(Event event, String userId) async {
+    try {
+      final notificationTime = event.date.subtract(const Duration(minutes: 30));
+      final now = DateTime.now();
 
-    final docSnapshot = await _firestore.collection('users').doc(userId).get();
-    final data = docSnapshot.data();
-    if (docSnapshot.exists && data != null && data.containsKey('fcmToken')) {
-      return data['fcmToken'] as String;
+      if (notificationTime.isAfter(now)) {
+        await _firestore
+            .collection('scheduled_notifications')
+            .doc(event.id)
+            .set({
+          'userId': userId,
+          'eventId': event.id,
+          'title': 'Upcoming Event: ${event.title}',
+          'body': 'Your event "${event.title}" starts in 30 minutes',
+          'scheduledTime': Timestamp.fromDate(notificationTime),
+          'triggered': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint('Error scheduling notification: $e');
     }
-    return null;
   }
 
-  // Listen to events stream and send push notification if event is 30 minutes after now
-  void listenAndNotify() {
-    streamAllEvents().listen((events) async {
-      final now = DateTime.now();
-      debugPrint('Checking events for notifications at $now');
-      final fcmToken = await getFcmToken();
-      if (fcmToken == null) {
-        debugPrint('FCM token not found for user');
-        return;
+  Future<void> _sendEventNotification({
+    required Event event,
+    required String title,
+    required String body,
+  }) async {
+    try {
+      final userId = _ref.read(userIdProvider);
+      if (userId == null) return;
+
+      final fcmToken = await _getFcmToken(userId);
+      if (fcmToken == null) return;
+
+      final success = await PushNotificationService().sendPushNotification(
+        fcmToken: fcmToken,
+        title: title,
+        body: body,
+        data: {'eventId': event.id, 'type': 'event_notification'},
+      );
+
+      if (success) {
+        debugPrint('Notification sent for event ${event.id}');
+      } else {
+        debugPrint('Failed to send notification for event ${event.id}');
       }
+    } catch (e) {
+      debugPrint('Error sending notification: $e');
+    }
+  }
 
-      for (final event in events) {
-        final difference = event.date.difference(now);
-        debugPrint('Event ${event.id} scheduled at ${event.date}, difference in minutes: ${difference.inMinutes}');
-        if (difference.inMinutes >= 29 && difference.inMinutes <= 31) {
-          final title = 'Upcoming Event: ${event.title}';
-          final body = 'Your event "${event.title}" starts in 30 minutes.';
-          final data = {'eventId': event.id};
-
-          debugPrint('Sending push notification for event ${event.id}');
-          final success = await PushNotificationService().sendPushNotification(
-            fcmToken: fcmToken,
-            title: title,
-            body: body,
-            data: data,
-          );
-
-          if (success) {
-            debugPrint('Push notification sent for event ${event.id}');
-          } else {
-            debugPrint('Failed to send push notification for event ${event.id}');
-          }
-        }
-      }
-    });
+  Future<String?> _getFcmToken(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      return doc.data()?['fcmToken'] as String?;
+    } catch (e) {
+      debugPrint('Error getting FCM token: $e');
+      return null;
+    }
   }
 }
