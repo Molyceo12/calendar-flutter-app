@@ -23,6 +23,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  bool _isDeleting = false;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
@@ -49,53 +51,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: 'Calendar',
         onLogoutPressed: _showLogoutDialog,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            CalendarWidget(
-              calendarFormat: _calendarFormat,
-              focusedDay: _focusedDay,
-              selectedDay: _selectedDay,
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(eventsForMonthProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              CalendarWidget(
+                calendarFormat: _calendarFormat,
+                focusedDay: _focusedDay,
+                selectedDay: _selectedDay,
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay;
+                  });
+                },
+                onFormatChanged: (format) {
+                  setState(() {
+                    _calendarFormat = format;
+                  });
+                },
+                onPageChanged: (focusedDay) {
                   _focusedDay = focusedDay;
-                });
-              },
-              onFormatChanged: (format) {
-                setState(() {
-                  _calendarFormat = format;
-                });
-              },
-              onPageChanged: (focusedDay) {
-                _focusedDay = focusedDay;
-              },
-              eventsAsync: eventsAsync,
-            ),
-            DateHeader(selectedDay: _selectedDay!),
-            const Divider(),
-            SizedBox(
-              height: 400,
-              child: EventsList(
-                selectedDay: _selectedDay!,
+                },
                 eventsAsync: eventsAsync,
-                onDeleteEvent: _deleteEvent,
               ),
-            ),
-          ],
+              DateHeader(selectedDay: _selectedDay!),
+              const Divider(),
+              SizedBox(
+                height: 400,
+                child: eventsAsync.when(
+                  data: (events) => EventsList(
+                    selectedDay: _selectedDay!,
+                    eventsAsync: AsyncValue.data(events),
+                    onDeleteEvent: _deleteEvent,
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(child: Text('Failed to load events')),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: AddEventFAB(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  SetScheduleScreen(selectedDate: _selectedDay!),
+      floatingActionButton: _isDeleting || _isLoggingOut
+          ? null
+          : AddEventFAB(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        SetScheduleScreen(selectedDate: _selectedDay!),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -113,6 +127,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     if (confirmed == true) {
+      setState(() {
+        _isDeleting = true;
+      });
       try {
         await ref.read(eventControllerProvider.notifier).deleteEvent(id);
         if (!mounted) return;
@@ -132,6 +149,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             backgroundColor: theme.colorScheme.error,
           ),
         );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isDeleting = false;
+          });
+        }
       }
     }
   }
@@ -150,6 +173,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     if (confirmed == true) {
+      setState(() {
+        _isLoggingOut = true;
+      });
       try {
         await ref.read(authControllerProvider.notifier).signOut();
       } catch (e) {
@@ -161,6 +187,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             backgroundColor: theme.colorScheme.error,
           ),
         );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoggingOut = false;
+          });
+        }
       }
     }
   }

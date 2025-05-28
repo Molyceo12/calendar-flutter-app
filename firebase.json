@@ -1,6 +1,7 @@
 {
   "functions": [
     {
+      "runtime": "nodejs22",
       "source": "functions",
       "codebase": "default",
       "ignore": [
@@ -10,9 +11,7 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
-      ]
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run lint"]
     }
   ]
 }
