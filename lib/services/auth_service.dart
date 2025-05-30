@@ -4,10 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -55,6 +58,16 @@ class AuthService {
           'lastActive': FieldValue.serverTimestamp(),
           'platform': Platform.operatingSystem,
         }, SetOptions(merge: true));
+      }
+
+      // Call Cloud Function to send login notification
+      try {
+        final HttpsCallable callable = _functions.httpsCallable('sendLoginNotification');
+        await callable.call(<String, dynamic>{
+          'userId': uid,
+        });
+      } catch (e) {
+        debugPrint('Error calling sendLoginNotification function: $e');
       }
 
       return credential;

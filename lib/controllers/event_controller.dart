@@ -11,6 +11,7 @@ class EventController extends StateNotifier<AsyncValue<void>> {
   final DatabaseService _dbService;
   final Ref _ref;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PushNotificationService _pushService = PushNotificationService();
 
   EventController(this._dbService, this._ref)
       : super(const AsyncValue.data(null));
@@ -175,11 +176,11 @@ class EventController extends StateNotifier<AsyncValue<void>> {
       final userId = _ref.read(userIdProvider);
       if (userId == null) return;
 
-      final fcmToken = await _getFcmToken(userId);
-      if (fcmToken == null) return;
+      final tokens = await _getFcmTokens(userId);
+      if (tokens.isEmpty) return;
 
-      final success = await PushNotificationService().sendPushNotification(
-        fcmToken: fcmToken,
+      final success = await _pushService.sendPushNotification(
+        fcmTokens: tokens,
         title: title,
         body: body,
         data: {'eventId': event.id, 'type': 'event_notification'},
@@ -190,18 +191,27 @@ class EventController extends StateNotifier<AsyncValue<void>> {
       } else {
         debugPrint('Failed to send notification for event ${event.id}');
       }
-    } catch (e) {
-      debugPrint('Error sending notification: $e');
+    } catch (e, stack) {
+      debugPrint('Error sending notification: $e\n$stack');
     }
   }
 
-  Future<String?> _getFcmToken(String userId) async {
+  Future<List<String>> _getFcmTokens(String userId) async {
     try {
-      final doc = await _firestore.collection('users').doc(userId).get();
-      return doc.data()?['fcmToken'] as String?;
-    } catch (e) {
-      debugPrint('Error getting FCM token: $e');
-      return null;
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('devices')
+          .where('fcmToken', isNotEqualTo: null)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => doc['fcmToken'] as String)
+          .where((token) => token.isNotEmpty)
+          .toList();
+    } catch (e, stack) {
+      debugPrint('Error getting FCM tokens: $e\n$stack');
+      return [];
     }
   }
 }

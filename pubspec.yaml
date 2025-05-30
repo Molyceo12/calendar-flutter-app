@@ -28,6 +28,7 @@ dependencies:
   googleapis_auth: ^2.0.0
   http: ^1.4.0
   flutter_dotenv: ^5.2.1
+  cloud_functions: ^5.5.1
 
 
 dev_dependencies:

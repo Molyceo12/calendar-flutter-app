@@ -1,8 +1,8 @@
 {
   "functions": [
     {
-      "runtime": "nodejs22",
-      "source": "functions",
+      "runtime": "nodejs20",
+      "source": "notifications",
       "codebase": "default",
       "ignore": [
         "node_modules",
@@ -10,8 +10,7 @@
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local"
-      ],
-      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run lint"]
+      ]
     }
   ]
 }
