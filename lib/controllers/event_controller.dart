@@ -23,6 +23,7 @@ class EventController extends StateNotifier<AsyncValue<void>> {
       await _dbService.insertEvent(event);
 
       final userId = _ref.read(userIdProvider);
+      debugPrint('EventController: createEvent called for user $userId with event ${event.id}');
       if (userId != null) {
         // Save to Firestore
         final eventMap = event.toMap();
@@ -36,6 +37,7 @@ class EventController extends StateNotifier<AsyncValue<void>> {
 
         // Schedule notification if enabled
         if (event.hasNotification) {
+          debugPrint('EventController: Scheduling notification for event ${event.id}');
           await _scheduleEventNotification(event, userId);
         }
 
@@ -147,6 +149,7 @@ class EventController extends StateNotifier<AsyncValue<void>> {
     try {
       final notificationTime = event.date.subtract(const Duration(minutes: 30));
       final now = DateTime.now();
+      debugPrint('EventController: Scheduling notification at $notificationTime for event ${event.id}');
 
       if (notificationTime.isAfter(now)) {
         await _firestore

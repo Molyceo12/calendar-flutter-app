@@ -14,31 +14,26 @@ class PushNotificationService {
 
   factory PushNotificationService() => _instance;
 
-  /// Obtain OAuth2 access token using service account credentials
+  /// Obtain OAuth2 access token for FCM API
   Future<String?> _getAccessToken() async {
     try {
       final serviceAccountJson = _getServiceAccountJson();
-      if (serviceAccountJson == null) {
-        debugPrint('Service account JSON is missing or invalid');
-        return null;
-      }
+      if (serviceAccountJson == null) return null;
 
       final accountCredentials =
           ServiceAccountCredentials.fromJson(serviceAccountJson);
       final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-
       final client = await clientViaServiceAccount(accountCredentials, scopes);
       final accessToken = client.credentials.accessToken.data;
       client.close();
-
       return accessToken;
     } catch (e, stack) {
-      debugPrint('Error obtaining access token: $e\n$stack');
+      debugPrint('Error getting access token: $e\n$stack');
       return null;
     }
   }
 
-  /// Schedules a notification for a calendar event
+  /// Schedule an event notification (30 min before by default)
   Future<bool> scheduleEventNotification({
     required String userId,
     required String eventId,
@@ -48,27 +43,18 @@ class PushNotificationService {
     Duration reminderBefore = const Duration(minutes: 30),
   }) async {
     try {
-      // Validate input parameters
-      if (userId.isEmpty || eventId.isEmpty || title.isEmpty) {
-        debugPrint('Invalid parameters for scheduling notification');
-        return false;
-      }
-
-      // Get the user's active device tokens
       final tokens = await _getUserDeviceTokens(userId);
       if (tokens.isEmpty) {
-        debugPrint('No device tokens found for user $userId');
+        debugPrint('No device tokens for user $userId');
         return false;
       }
 
-      // Calculate notification time
       final notificationTime = eventTime.subtract(reminderBefore);
       if (notificationTime.isBefore(DateTime.now())) {
         debugPrint('Notification time is in the past');
         return false;
       }
 
-      // Create the notification document
       await _firestore.collection('scheduled_notifications').add({
         'userId': userId,
         'eventId': eventId,
@@ -77,138 +63,100 @@ class PushNotificationService {
         'body': body,
         'scheduledTime': notificationTime,
         'createdAt': FieldValue.serverTimestamp(),
-        'status': 'scheduled',
-        'reminderBeforeMinutes': reminderBefore.inMinutes,
+        'triggered': false,
       });
 
-      debugPrint('Notification scheduled successfully for event $eventId');
+      debugPrint('Event notification scheduled.');
       return true;
     } catch (e, stack) {
-      debugPrint('Error scheduling notification: $e\n$stack');
+      debugPrint('Error scheduling: $e\n$stack');
       return false;
     }
   }
 
-  /// Retrieves all active device tokens for a user
-  Future<List<String>> _getUserDeviceTokens(String userId) async {
-    try {
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('devices')
-          .where('fcmToken', isNotEqualTo: null)
-          .get();
-
-      return userDoc.docs
-          .where((doc) => doc.id != 'init')
-          .map((doc) => doc['fcmToken'] as String)
-          .where((token) => token.isNotEmpty)
-          .toList();
-    } catch (e) {
-      debugPrint('Error getting user device tokens: $e');
-      return [];
-    }
-  }
-
-  /// Sends an immediate push notification
+  /// Send immediate push notification (e.g., login/signup)
   Future<bool> sendPushNotification({
     required List<String> fcmTokens,
     required String title,
     required String body,
     Map<String, dynamic>? data,
   }) async {
-    if (fcmTokens.isEmpty) {
-      debugPrint('No FCM tokens provided');
-      return false;
-    }
+    if (fcmTokens.isEmpty) return false;
 
-    try {
-      final accessToken = await _getAccessToken();
-      if (accessToken == null) {
-        debugPrint('Failed to obtain access token');
-        return false;
-      }
+    final accessToken = await _getAccessToken();
+    if (accessToken == null) return false;
 
-      final serviceAccountJson = _getServiceAccountJson();
-      if (serviceAccountJson == null) {
-        debugPrint('Service account JSON is missing or invalid');
-        return false;
-      }
+    final projectId = _getServiceAccountJson()?['project_id'];
+    final url = Uri.parse(
+        'https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
 
-      final projectId = serviceAccountJson['project_id'];
-      final url = Uri.parse(
-          'https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
+    for (final token in fcmTokens) {
+      final message = {
+        'message': {
+          'token': token,
+          'notification': {'title': title, 'body': body},
+          'data': data ?? {'type': 'default'},
+        }
+      };
 
-      // Send to each token (in production, you might want to batch these)
-      for (final token in fcmTokens) {
-        final message = {
-          'message': {
-            'token': token,
-            'notification': {
-              'title': title,
-              'body': body,
-            },
-            'data': data ??
-                {
-                  'type': 'event_reminder',
-                  'timestamp': DateTime.now().toString()
-                },
-          }
-        };
-
-        final response = await http.post(
-          url,
+      final response = await http.post(url,
           headers: {
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': 'Bearer $accessToken',
           },
-          body: json.encode(message),
-        );
+          body: json.encode(message));
 
-        if (response.statusCode != 200) {
-          debugPrint(
-              'Failed to send push notification to $token: ${response.body}');
-          return false;
-        }
+      if (response.statusCode != 200) {
+        debugPrint('Error sending push to $token: ${response.body}');
+        return false;
       }
+    }
 
-      debugPrint(
-          'Push notifications sent successfully to ${fcmTokens.length} devices');
-      return true;
-    } catch (e, stack) {
-      debugPrint('Error sending push notification: $e\n$stack');
-      return false;
+    debugPrint('Push sent to ${fcmTokens.length} devices');
+    return true;
+  }
+
+  /// Get user device tokens
+  Future<List<String>> _getUserDeviceTokens(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('devices')
+          .get();
+      return snapshot.docs
+          .map((doc) => doc.data()['fcmToken'] as String?)
+          .whereType<String>()
+          .where((token) => token.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting tokens: $e');
+      return [];
     }
   }
 
-  /// Helper method to get service account credentials
+  /// Get Service Account JSON
   Map<String, dynamic>? _getServiceAccountJson() {
     try {
       final privateKey =
-          StringEnv()['PRIVATE_KEY']?.replaceAll('\n', '\\n') ?? '';
-      if (privateKey.isEmpty) {
-        debugPrint('Private key is empty');
-        return null;
-      }
+          StringEnv()['PRIVATE_KEY']?.replaceAll(r'\n', '\n') ?? '';
+      if (privateKey.isEmpty) return null;
 
       return {
-        "type": StringEnv()['TYPE'] ?? "service_account",
-        "project_id": StringEnv()['PROJECT_ID'] ?? "",
-        "private_key_id": StringEnv()['PRIVATE_KEY_ID'] ?? "",
+        "type": StringEnv()['TYPE'],
+        "project_id": StringEnv()['PROJECT_ID'],
+        "private_key_id": StringEnv()['PRIVATE_KEY_ID'],
         "private_key": privateKey,
-        "client_email": StringEnv()['CLIENT_EMAIL'] ?? "",
-        "client_id": StringEnv()['CLIENT_ID'] ?? "",
-        "auth_uri": StringEnv()['AUTH_URI'] ??
-            "https://accounts.google.com/o/oauth2/auth",
-        "token_uri":
-            StringEnv()['TOKEN_URI'] ?? "https://oauth2.googleapis.com/token",
+        "client_email": StringEnv()['CLIENT_EMAIL'],
+        "client_id": StringEnv()['CLIENT_ID'],
+        "auth_uri": StringEnv()['AUTH_URI'],
+        "token_uri": StringEnv()['TOKEN_URI'],
         "auth_provider_x509_cert_url":
-            StringEnv()['AUTH_PROVIDER_X509_CERT_URL'] ??
-                "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": StringEnv()['CLIENT_X509_CERT_URL'] ?? "",
+            StringEnv()['AUTH_PROVIDER_X509_CERT_URL'],
+        "client_x509_cert_url": StringEnv()['CLIENT_X509_CERT_URL'],
       };
     } catch (e, stack) {
-      debugPrint('Error parsing service account JSON: $e\n$stack');
+      debugPrint('Error in service account JSON: $e\n$stack');
       return null;
     }
   }

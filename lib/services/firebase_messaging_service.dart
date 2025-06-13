@@ -2,6 +2,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'local_notification_service.dart';
 
 class FirebaseMessagingService {
   static final FirebaseMessagingService _instance =
@@ -13,9 +14,13 @@ class FirebaseMessagingService {
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LocalNotificationService _localNotificationService = LocalNotificationService();
 
   Future<void> initialize(String userId) async {
     try {
+      // Initialize local notifications
+      await _localNotificationService.initialize();
+
       // Request permissions
       final settings = await _firebaseMessaging.requestPermission(
         alert: true,
@@ -29,9 +34,13 @@ class FirebaseMessagingService {
 
       // Get and store token
       final token = await _firebaseMessaging.getToken();
+      debugPrint('Retrieved FCM token: $token');
       if (token != null) {
         await _updateFcmToken(userId, token);
         debugPrint('FCM token received and stored: $token');
+      } else {
+        debugPrint('FCM token is null, fallback to local notifications');
+        // Fallback logic can be implemented here if needed
       }
 
       // Setup message handlers
@@ -57,6 +66,15 @@ class FirebaseMessagingService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Foreground message received: ${message.messageId}');
       _handleMessageContent(message);
+      // Show local notification for foreground message
+      if (message.notification != null) {
+        _localNotificationService.showNotification(
+          id: message.hashCode,
+          title: message.notification?.title ?? 'Notification',
+          body: message.notification?.body ?? '',
+          payload: message.data['eventId'] ?? '',
+        );
+      }
     });
 
     // Background messages when app is opened

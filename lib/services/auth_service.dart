@@ -33,39 +33,26 @@ class AuthService {
         password: password,
       );
 
-      final String? fcmToken = await FirebaseMessaging.instance.getToken();
       final String uid = credential.user!.uid;
+
+      // Save device info
+      await _saveDeviceInfoForUser(uid);
 
       // Store uid in SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('uid', uid);
 
-      // Get device ID
-      final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-      String deviceId;
-
-        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        deviceId = androidInfo.id;
-
-      if (fcmToken != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('devices')
-            .doc(deviceId)
-            .set({
-          'fcmToken': fcmToken,
-          'lastActive': FieldValue.serverTimestamp(),
-          'platform': Platform.operatingSystem,
-        }, SetOptions(merge: true));
-      }
-
       // Call Cloud Function to send login notification
       try {
-        final HttpsCallable callable = _functions.httpsCallable('sendLoginNotification');
+        debugPrint(
+            'AuthService: Calling sendLoginNotification cloud function for user $uid');
+        final HttpsCallable callable =
+            _functions.httpsCallable('sendLoginNotification');
         await callable.call(<String, dynamic>{
           'userId': uid,
         });
+        debugPrint(
+            'AuthService: sendLoginNotification cloud function called successfully');
       } catch (e) {
         debugPrint('Error calling sendLoginNotification function: $e');
       }
@@ -84,16 +71,20 @@ class AuthService {
         email: email,
         password: password,
       );
+
       final uid = userCredential.user!.uid;
 
       // Create user document with empty subcollections devices and events
-      final userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
+      final userDocRef =
+          FirebaseFirestore.instance.collection('users').doc(uid);
       await userDocRef.set({
         'createdAt': FieldValue.serverTimestamp(),
       });
-      
-      await userDocRef.collection('devices').doc('init').set({'init': true});
+
       await userDocRef.collection('events').doc('init').set({'init': true});
+
+      // Save device info
+      await _saveDeviceInfoForUser(uid);
 
       return userCredential;
     } catch (e) {
@@ -104,5 +95,41 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  // Helper function: Save device info (Android only)
+  Future<void> _saveDeviceInfoForUser(String uid) async {
+    try {
+      final String? fcmToken = await FirebaseMessaging.instance.getToken();
+      final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      String deviceId = '';
+
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id;
+      } else {
+        deviceId = 'unknown_device';
+      }
+
+      if (fcmToken != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('devices')
+            .doc(deviceId)
+            .set({
+          'fcmToken': fcmToken,
+          'lastActive': FieldValue.serverTimestamp(),
+          'platform': Platform.operatingSystem,
+        }, SetOptions(merge: true));
+
+        debugPrint('AuthService: Device info saved for user $uid');
+      } else {
+        debugPrint(
+            'AuthService: FCM token is null, skipping device info save.');
+      }
+    } catch (e) {
+      debugPrint('AuthService: Error saving device info: $e');
+    }
   }
 }
