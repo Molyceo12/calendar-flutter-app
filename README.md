@@ -99,8 +99,7 @@ Contributions are welcome! Please open issues or submit pull requests for improv
 
 ## Contributors
 
-- ABAYIZERA Samuel
-- BIZIMANA Bertin
+-Irimaso Maurice
 
 ## Resources
 
